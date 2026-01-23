@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.example.MainController"
+            prefWidth="1200.0" prefHeight="700.0"
+            stylesheets="@styles.css"
+            styleClass="root">
+
+    <!-- ===== LEFT SIDEBAR ===== -->
+    <left>
+        <VBox fx:id="sidebar" prefWidth="250.0" spacing="12.0" styleClass="sidebar">
+            <padding>
+                <Insets top="18" right="18" bottom="18" left="18"/>
+            </padding>
+
+            <Region prefHeight="6"/>
+
+            <VBox spacing="6.0">
+                <Button styleClass="nav-item">
+                    <text>Entrées</text>
+                    <graphic>
+                        <ImageView fitWidth="34.0" fitHeight="34.0" preserveRatio="true" smooth="true">
+                            <image><Image url="@icons/rechercher.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+
+                <Button text="Sens" styleClass="nav-item">
+                    <graphic>
+                        <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
+                            <image><Image url="@icons/notes.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+
+                <Button text="Exemples" styleClass="nav-item">
+                    <graphic>
+                        <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
+                            <image><Image url="@icons/notes-autocollantes.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+
+                <Button text="Variantes" styleClass="nav-item">
+                    <graphic>
+                        <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
+                            <image><Image url="@icons/livre-sur-les-nuages.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+
+                <Button text="Étymologie" styleClass="nav-item">
+                    <graphic>
+                        <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
+                            <image><Image url="@icons/etudes-de-cas.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </VBox>
+
+            <Separator styleClass="side-sep"/>
+
+            <VBox spacing="6.0">
+                <Label text="Autres" styleClass="sidebar-section-title"/>
+
+                <Button text="Navigation par facette" styleClass="nav-item">
+                    <graphic>
+                        <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
+                            <image><Image url="@icons/navigateur-web.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+
+                <Button text="Langue objet" styleClass="nav-item">
+                    <graphic>
+                        <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
+                            <image><Image url="@icons/globe-terrestre.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+
+                <Button text="Méta-langues / Tags" styleClass="nav-item">
+                    <graphic>
+                        <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
+                            <image><Image url="@icons/tag-incline.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+
+                <Button text="Annotations" styleClass="nav-item">
+                    <graphic>
+                        <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
+                            <image><Image url="@icons/google-docs.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+
+                <Button text="Type de note" styleClass="nav-item">
+                    <graphic>
+                        <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
+                            <image><Image url="@icons/notes.png"/></image>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </VBox>
+
+            <Region VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </left>
+
+    <!-- ===== TOP BAR ===== -->
+    <top>
+        <HBox spacing="12.0" styleClass="topbar">
+            <padding>
+                <Insets top="12" right="12" bottom="12" left="12"/>
+            </padding>
+
+            <Button fx:id="menuButton" onAction="#toggleSidebar" styleClass="menu-icon-btn">
+                <graphic>
+                    <ImageView fitWidth="22.0" fitHeight="22.0" preserveRatio="true">
+                        <image><Image url="@icons/menu.png"/></image>
+                    </ImageView>
+                </graphic>
+            </Button>
+
+            <TextField fx:id="searchField" promptText="Rechercher..." styleClass="search"/>
+            <Button text="+ Note" styleClass="primary"/>
+            <MenuButton text="Filtrer par" styleClass="secondary"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="⚙" styleClass="icon-btn"/>
+        </HBox>
+    </top>
+
+    <!-- ===== CENTER ===== -->
+    <center>
+        <VBox spacing="12.0" styleClass="content">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <Label text="Entrées" styleClass="h1"/>
+
+            <VBox styleClass="table-card" spacing="10.0">
+                <padding>
+                    <Insets top="12" right="12" bottom="12" left="12"/>
+                </padding>
+
+                <HBox>
+                    <Label text="Tableau des entrées" styleClass="card-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="0 entrées affichées" styleClass="muted"/>
+                </HBox>
+
+                <TableView fx:id="entryTable" styleClass="table" VBox.vgrow="ALWAYS"/>
+
+                <HBox spacing="10.0" alignment="CENTER_RIGHT">
+                    <Button text="◀" styleClass="secondary"/>
+                    <Label text="1 / 1" styleClass="muted"/>
+                    <Button text="▶" styleClass="secondary"/>
+                </HBox>
+            </VBox>
+        </VBox>
+    </center>
+
+    <!-- ===== RIGHT ===== -->
+    <right>
+        <!-- Tu peux augmenter encore si tu veux: prefWidth="460.0" -->
+        <VBox prefWidth="440.0" spacing="12.0" styleClass="rightpanel">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <Label text="Formulaire d’édition" styleClass="h1"/>
+
+            <VBox styleClass="form-card" spacing="12.0">
+                <padding>
+                    <Insets top="14" right="14" bottom="14" left="14"/>
+                </padding>
+
+                <HBox>
+                    <Label text="Entrée sélectionnée" styleClass="card-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="✎" styleClass="icon-btn"/>
+                </HBox>
+
+                <Separator/>
+
+                <!-- IMPORTANT: column constraints + maxWidth Infinity -->
+                <GridPane hgap="12.0" vgap="12.0">
+                    <columnConstraints>
+                        <ColumnConstraints minWidth="170" halignment="LEFT"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+
+                    <Label text="Type morphologique" styleClass="field-label"
+                           GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+
+                    <TextField fx:id="morphTypeField" styleClass="field"
+                               GridPane.rowIndex="0" GridPane.columnIndex="1"
+                               maxWidth="Infinity"/>
+
+                    <Label text="Catégorie grammaticale" styleClass="field-label"
+                           GridPane.rowIndex="1" GridPane.columnIndex="0"
+                           wrapText="true"/>
+
+                    <TextField fx:id="gramCatField" styleClass="field"
+                               GridPane.rowIndex="1" GridPane.columnIndex="1"
+                               maxWidth="Infinity"/>
+                </GridPane>
+
+                <TabPane tabClosingPolicy="UNAVAILABLE">
+                    <tabs>
+                        <Tab text="Formes">
+                            <VBox>
+                                <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+                                <Label text="(à remplir plus tard)" styleClass="muted"/>
+                            </VBox>
+                        </Tab>
+                        <Tab text="Sens">
+                            <VBox>
+                                <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+                                <Label text="(à remplir plus tard)" styleClass="muted"/>
+                            </VBox>
+                        </Tab>
+                    </tabs>
+                </TabPane>
+
+                <!-- Boutons connectés -->
+                <HBox spacing="10.0" alignment="CENTER_RIGHT">
+                    <Button text="Enregistrer" styleClass="primary" onAction="#saveEntry"/>
+                    <Button text="Annuler" styleClass="secondary" onAction="#cancelEdit"/>
+                </HBox>
+            </VBox>
+        </VBox>
+    </right>
+
+</BorderPane>

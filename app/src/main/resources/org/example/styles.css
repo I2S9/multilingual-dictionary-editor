@@ -1,0 +1,410 @@
+/* ================= ROOT ================= */
+.root {
+    -fx-background-color: #f5f7fb;
+    -fx-font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    -fx-background-color: linear-gradient(to bottom, #1f3b6d, #1c3561);
+    -fx-background-radius: 0;
+}
+
+.sidebar-section-title {
+    -fx-text-fill: rgba(255,255,255,0.65);
+    -fx-font-size: 12px;
+    -fx-padding: 10 0 4 14;
+}
+
+.sidebar-sep {
+    -fx-opacity: 0.25;
+}
+
+/* ================= NAV ITEMS ================= */
+.nav-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #e8ecf3;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+
+    -fx-alignment: CENTER_LEFT;
+    -fx-graphic-text-gap: 16;
+
+    -fx-min-height: 50px;
+    -fx-pref-height: 50px;
+
+    -fx-padding: 0 16 0 14;
+    -fx-background-radius: 12;
+}
+
+/* 🔥 Hover foncé (même teinte que la sidebar) */
+.nav-item:hover {
+    -fx-background-color: rgba(28, 53, 97, 0.65);
+}
+
+/* 🔥 Item sélectionné */
+.nav-item-selected {
+    -fx-background-color: rgba(28, 53, 97, 0.9);
+    -fx-text-fill: white;
+}
+
+/* ================= TOP BAR ================= */
+.topbar {
+    -fx-background-color: white;
+    -fx-border-color: #e5e9f2;
+    -fx-border-width: 0 0 1 0;
+}
+
+.menu-btn {
+    -fx-background-color: #eef2ff;
+    -fx-background-radius: 14;
+    -fx-padding: 10 12;
+}
+
+.menu-btn:hover {
+    -fx-background-color: #e5ebff;
+}
+
+.search {
+    -fx-background-radius: 20;
+    -fx-padding: 10 14;
+    -fx-background-color: #f2f6ff;
+    -fx-border-color: #dfe7ff;
+    -fx-border-radius: 20;
+}
+
+.primary {
+    -fx-background-color: #2f66ff;
+    -fx-text-fill: white;
+    -fx-background-radius: 16;
+    -fx-padding: 10 16;
+}
+
+.secondary {
+    -fx-background-color: #eef2ff;
+    -fx-text-fill: #1f3b6d;
+    -fx-background-radius: 16;
+    -fx-padding: 10 16;
+}
+
+.icon-btn {
+    -fx-background-color: transparent;
+    -fx-font-size: 16px;
+}
+
+/* ================= CONTENT ================= */
+.content,
+.rightpanel {
+    -fx-background-color: transparent;
+}
+
+.h1 {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1b2b4a;
+}
+
+.card-title {
+    -fx-font-weight: bold;
+    -fx-text-fill: #1b2b4a;
+}
+
+.muted {
+    -fx-text-fill: #8091b3;
+}
+
+/* ================= ENTRÉES : SANS BACKGROUND ================= */
+
+/* Conteneur */
+.table-card {
+    -fx-background-color: transparent;
+    -fx-effect: null;
+}
+
+/* TableView COMPLETEMENT clean */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: #dbe4f5;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+}
+
+/* Zone interne */
+.table-view .virtual-flow {
+    -fx-background-color: transparent;
+}
+
+/* Header */
+.table-view .column-header-background {
+    -fx-background-color: transparent;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+}
+
+/* Cellules */
+.table-view .table-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #2b3b55;
+}
+
+/* Ligne sélectionnée */
+.table-row-cell:selected {
+    -fx-background-color: rgba(47, 102, 255, 0.15);
+}
+
+/* ================= FORM CARD ================= */
+.form-card {
+    -fx-background-color: rgba(255,255,255,0.94);
+    -fx-background-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 18, 0.2, 0, 6);
+}
+
+/* ================= FIELDS ================= */
+.field-label {
+    -fx-text-fill: #52648a;
+}
+
+.field {
+        -fx-pref-width: 100%;
+
+    -fx-background-color: #f2f6ff;
+    -fx-border-color: #dfe7ff;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 8 10;
+}
+
+
+/* ===== MENU ICON BUTTON (☰) ===== */
+.menu-icon-btn {
+    -fx-background-color: #2f66ff;      /* même bleu que + Note */
+    -fx-background-radius: 14;
+    -fx-padding: 10;
+}
+
+.menu-icon-btn:hover {
+    -fx-background-color: #244edb;      /* bleu plus foncé (hover) */
+}
+
+.menu-icon-btn:pressed {
+    -fx-background-color: #1f3b6d;      /* bleu sidebar (pressed) */
+}
+
+
+.menu-icon-btn.active {
+    -fx-background-color: rgba(255, 255, 255, 0.18);
+}
+
+
+/* ===== FORM HEADER LOOK ===== */
+.form-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1b2b4a;
+}
+
+.badge {
+    -fx-background-color: #eef2ff;
+    -fx-text-fill: #1f3b6d;
+    -fx-padding: 3 10;
+    -fx-background-radius: 999;
+    -fx-border-color: #dfe7ff;
+    -fx-border-radius: 999;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.section-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1b2b4a;
+}
+
+/* Tabs a bit cleaner */
+.tabs .tab-header-area {
+    -fx-padding: 0 0 6 0;
+}
+
+.tabs .tab {
+    -fx-background-color: #eef2ff;
+    -fx-background-radius: 10 10 0 0;
+    -fx-border-radius: 10 10 0 0;
+}
+
+.tabs .tab:selected {
+    -fx-background-color: white;
+}
+
+/* "+ Ajouter exemple" look */
+.add-example {
+    -fx-padding: 10 14;
+    -fx-background-radius: 14;
+}
+/* ===== CLEAN MODERN TABS ===== */
+.clean-tabs {
+    -fx-background-color: transparent;
+}
+
+.clean-tabs .tab-header-area {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 8 0;
+}
+
+.clean-tabs .headers-region {
+    -fx-background-color: transparent;
+}
+
+.clean-tabs .tab {
+    -fx-background-color: #eef2ff;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-padding: 6 14;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1f3b6d;
+}
+
+.clean-tabs .tab:selected {
+    -fx-background-color: white;
+    -fx-text-fill: #1b2b4a;
+}
+
+.clean-tabs .tab:hover {
+    -fx-background-color: #e5ebff;
+}
+
+.clean-tabs .tab-content-area {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-padding: 12;
+}
+
+/* content inside tab */
+.tab-content {
+    -fx-padding: 10;
+}
+/* ===== TABPANE : ZERO GRIS, ZERO BARRE ===== */
+.clean-tabs {
+    -fx-background-color: transparent;
+}
+
+.clean-tabs .tab-header-area {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 10 0;
+}
+
+/* ⛔ C'EST ICI LE PROBLÈME */
+.clean-tabs .tab-header-background {
+    -fx-background-color: transparent;
+    -fx-opacity: 0;
+}
+
+/* zone des tabs */
+.clean-tabs .headers-region {
+    -fx-background-color: transparent;
+}
+
+/* tab normal */
+.clean-tabs .tab {
+    -fx-background-color: #eef2ff;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-padding: 6 16;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1f3b6d;
+}
+
+/* tab actif */
+.clean-tabs .tab:selected {
+    -fx-background-color: white;
+    -fx-text-fill: #1b2b4a;
+}
+
+/* hover */
+.clean-tabs .tab:hover {
+    -fx-background-color: #e5ebff;
+}
+
+/* CONTENU DU TAB */
+.clean-tabs .tab-content-area {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-padding: 14;
+}
+/* ===== SUPPRIMER LE CADRE BLEU DE FOCUS ===== */
+.clean-tabs .tab:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-insets: 0;
+}
+
+.clean-tabs .tab:selected:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+/* ===== Custom Alert ===== */
+.custom-alert .dialog-pane {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: #E6ECFF;
+    -fx-border-width: 1;
+    -fx-padding: 12;
+}
+
+.custom-alert .content.label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #334155;
+}
+
+.custom-alert .header-panel {
+    -fx-background-color: transparent;
+}
+
+.custom-alert .button-bar .button {
+    -fx-background-radius: 12;
+    -fx-padding: 8 16;
+    -fx-font-weight: 700;
+}
+
+.custom-alert .button-bar .button:default {
+    -fx-background-color: #2F5BFF;
+    -fx-text-fill: white;
+}
+
+.custom-alert .button-bar .button:cancel {
+    -fx-background-color: #EEF2FF;
+    -fx-text-fill: #1F2A44;
+}
+/* ===== TOAST ===== */
+.toast {
+    -fx-padding: 12 14;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 16, 0.2, 0, 6);
+    -fx-max-width: 320;
+    -fx-arc-height: 50;
+}
+
+.toast-success {
+    -fx-background-color: rgba(30, 150, 90, 0.92);
+}
+
+.toast-error {
+    -fx-background-color: rgba(200, 60, 60, 0.92);
+}
+
+.toast-title {
+    -fx-text-fill: white;
+    -fx-font-weight: 700;
+    -fx-font-size: 13px;
+}
+
+.toast-message {
+    -fx-text-fill: rgba(255,255,255,0.92);
+    -fx-font-size: 12px;
+}
