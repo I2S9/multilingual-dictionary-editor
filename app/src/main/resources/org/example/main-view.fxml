@@ -23,8 +23,7 @@
             <Region prefHeight="6"/>
 
             <VBox spacing="6.0">
-                <Button styleClass="nav-item">
-                    <text>Entrées</text>
+                <Button fx:id="btnEntries" text="Entrées" styleClass="nav-item" onAction="#showEntries">
                     <graphic>
                         <ImageView fitWidth="34.0" fitHeight="34.0" preserveRatio="true" smooth="true">
                             <image><Image url="@icons/rechercher.png"/></image>
@@ -32,7 +31,7 @@
                     </graphic>
                 </Button>
 
-                <Button text="Sens" styleClass="nav-item">
+                <Button fx:id="btnSenses" text="Sens" styleClass="nav-item" onAction="#showSenses">
                     <graphic>
                         <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
                             <image><Image url="@icons/notes.png"/></image>
@@ -131,8 +130,8 @@
             </Button>
 
             <TextField fx:id="searchField" promptText="Rechercher..." styleClass="search"/>
-            <Button text="+ Note" styleClass="primary"/>
-            <MenuButton text="Filtrer par" styleClass="secondary"/>
+            <Button text="Ouvrir..." styleClass="secondary" onAction="#openLiftFile"/>
+
             <Region HBox.hgrow="ALWAYS"/>
             <Button text="⚙" styleClass="icon-btn"/>
         </HBox>
@@ -140,59 +139,69 @@
 
     <!-- ===== CENTER ===== -->
     <center>
-        <VBox spacing="12.0" styleClass="content">
-            <padding>
-                <Insets top="16" right="16" bottom="16" left="16"/>
-            </padding>
+        <StackPane>
 
-            <Label text="Entrées" styleClass="h1"/>
+            <!-- ENTRIES -->
+            <VBox fx:id="entriesView" spacing="12.0" styleClass="content">
+                <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
 
-            <VBox styleClass="table-card" spacing="10.0">
-                <padding>
-                    <Insets top="12" right="12" bottom="12" left="12"/>
-                </padding>
+                <Label text="Entrées" styleClass="h1"/>
 
-                <HBox>
-                    <Label text="Tableau des entrées" styleClass="card-title"/>
-                    <Region HBox.hgrow="ALWAYS"/>
-                    <Label text="0 entrées affichées" styleClass="muted"/>
-                </HBox>
+                <VBox styleClass="table-card" spacing="10.0">
+                    <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
 
-                <TableView fx:id="entryTable" styleClass="table" VBox.vgrow="ALWAYS"/>
+                    <HBox>
+                        <Label text="Tableau des entrées" styleClass="card-title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="entriesCountLabel" text="0 entrées" styleClass="muted"/>
+                    </HBox>
 
-                <HBox spacing="10.0" alignment="CENTER_RIGHT">
-                    <Button text="◀" styleClass="secondary"/>
-                    <Label text="1 / 1" styleClass="muted"/>
-                    <Button text="▶" styleClass="secondary"/>
-                </HBox>
+                    <!-- ✅ filters are now inside column headers -->
+                    <TableView fx:id="entryTable" styleClass="table" VBox.vgrow="ALWAYS"/>
+                </VBox>
             </VBox>
-        </VBox>
+
+            <!-- SENSES -->
+            <VBox fx:id="sensesView" spacing="12.0" styleClass="content" visible="false" managed="false">
+                <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+
+                <Label text="Sens" styleClass="h1"/>
+
+                <VBox styleClass="table-card" spacing="10.0">
+                    <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+
+                    <HBox>
+                        <Label text="Tableau des sens" styleClass="card-title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="sensesCountLabel" text="0 sens" styleClass="muted"/>
+                    </HBox>
+
+                    <!-- ✅ filters are now inside column headers -->
+                    <TableView fx:id="senseTable" styleClass="table" VBox.vgrow="ALWAYS"/>
+                </VBox>
+            </VBox>
+
+        </StackPane>
     </center>
 
     <!-- ===== RIGHT ===== -->
     <right>
-        <!-- Tu peux augmenter encore si tu veux: prefWidth="460.0" -->
         <VBox prefWidth="440.0" spacing="12.0" styleClass="rightpanel">
-            <padding>
-                <Insets top="16" right="16" bottom="16" left="16"/>
-            </padding>
+            <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
 
-            <Label text="Formulaire d’édition" styleClass="h1"/>
+            <Label fx:id="editTitleLabel" text="Formulaire d’édition" styleClass="h1"/>
 
             <VBox styleClass="form-card" spacing="12.0">
-                <padding>
-                    <Insets top="14" right="14" bottom="14" left="14"/>
-                </padding>
+                <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
 
                 <HBox>
-                    <Label text="Entrée sélectionnée" styleClass="card-title"/>
+                    <Label fx:id="editSubTitleLabel" text="Sélection" styleClass="card-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button text="✎" styleClass="icon-btn"/>
                 </HBox>
 
                 <Separator/>
 
-                <!-- IMPORTANT: column constraints + maxWidth Infinity -->
                 <GridPane hgap="12.0" vgap="12.0">
                     <columnConstraints>
                         <ColumnConstraints minWidth="170" halignment="LEFT"/>
@@ -201,40 +210,18 @@
 
                     <Label text="Type morphologique" styleClass="field-label"
                            GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-
                     <TextField fx:id="morphTypeField" styleClass="field"
-                               GridPane.rowIndex="0" GridPane.columnIndex="1"
-                               maxWidth="Infinity"/>
+                               GridPane.rowIndex="0" GridPane.columnIndex="1" maxWidth="Infinity"/>
 
                     <Label text="Catégorie grammaticale" styleClass="field-label"
-                           GridPane.rowIndex="1" GridPane.columnIndex="0"
-                           wrapText="true"/>
-
+                           GridPane.rowIndex="1" GridPane.columnIndex="0"/>
                     <TextField fx:id="gramCatField" styleClass="field"
-                               GridPane.rowIndex="1" GridPane.columnIndex="1"
-                               maxWidth="Infinity"/>
+                               GridPane.rowIndex="1" GridPane.columnIndex="1" maxWidth="Infinity"/>
                 </GridPane>
 
-                <TabPane tabClosingPolicy="UNAVAILABLE">
-                    <tabs>
-                        <Tab text="Formes">
-                            <VBox>
-                                <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
-                                <Label text="(à remplir plus tard)" styleClass="muted"/>
-                            </VBox>
-                        </Tab>
-                        <Tab text="Sens">
-                            <VBox>
-                                <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
-                                <Label text="(à remplir plus tard)" styleClass="muted"/>
-                            </VBox>
-                        </Tab>
-                    </tabs>
-                </TabPane>
-
-                <!-- Boutons connectés -->
                 <HBox spacing="10.0" alignment="CENTER_RIGHT">
-                    <Button text="Enregistrer" styleClass="primary" onAction="#saveEntry"/>
+                    <Button text="Appliquer" styleClass="primary" onAction="#applyEdit"/>
+                    <Button text="Sauvegarder fichier" styleClass="secondary" onAction="#saveFile"/>
                     <Button text="Annuler" styleClass="secondary" onAction="#cancelEdit"/>
                 </HBox>
             </VBox>

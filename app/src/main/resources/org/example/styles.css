@@ -38,8 +38,19 @@
 }
 
 /* 🔥 Hover foncé (même teinte que la sidebar) */
+/* hover blanc transparent */
 .nav-item:hover {
-    -fx-background-color: rgba(28, 53, 97, 0.65);
+    -fx-background-color: rgba(255, 255, 255, 0.16);
+    -fx-background-radius: 14;
+}
+
+/* ✅ état actif */
+.nav-item-active {
+    -fx-background-color: rgba(255, 255, 255, 0.22);
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(255, 255, 255, 0.25);
+    -fx-border-width: 1;
+    -fx-border-radius: 14;
 }
 
 /* 🔥 Item sélectionné */
@@ -407,4 +418,46 @@
 .toast-message {
     -fx-text-fill: rgba(255,255,255,0.92);
     -fx-font-size: 12px;
+}
+
+
+.col-title {
+    -fx-font-weight: 700;
+    -fx-font-size: 12px;
+}
+
+.col-filter {
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: rgba(160,160,160,0.35);
+    -fx-background-color: rgba(255,255,255,0.85);
+    -fx-padding: 6 10 6 10;
+}
+
+/* ✅ état "actif" : le menu sélectionné
+.nav-item-active {
+    -fx-background-color: rgba(255, 255, 255, 0.22);
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(255, 255, 255, 0.25);
+    -fx-border-width: 1;
+    -fx-border-radius: 14;
+}*/
+
+.filter-field {
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 8 10 8 10;
+    -fx-background-color: rgba(255,255,255,0.65);
+}
+.header-title {
+    -fx-font-weight: 700;
+    -fx-text-fill: #1f2a44;
+}
+
+.header-filter {
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 6 10 6 10;
+    -fx-background-color: rgba(255,255,255,0.80);
+    -fx-border-color: rgba(0,0,0,0.08);
 }
