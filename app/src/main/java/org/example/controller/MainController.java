@@ -1,5 +1,6 @@
-package org.example;
+package org.example.controller;
 
+import fr.cnrs.lacito.liftapi.LiftDictionary;
 import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -19,19 +20,24 @@ import javafx.stage.FileChooser;
 import javafx.stage.Popup;
 import javafx.stage.Window;
 import javafx.util.Duration;
-import org.w3c.dom.*;
+import org.example.service.LiftService;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+
+import fr.cnrs.lacito.liftapi.model.Form;
+import fr.cnrs.lacito.liftapi.model.GrammaticalInfo;
+import fr.cnrs.lacito.liftapi.model.LiftEntry;
+import fr.cnrs.lacito.liftapi.model.LiftSense;
+import fr.cnrs.lacito.liftapi.model.LiftTrait;
+import fr.cnrs.lacito.liftapi.model.MultiText;
+
+import fr.cnrs.lacito.liftapi.model.LiftEntry;
+import fr.cnrs.lacito.liftapi.model.LiftSense;
+import fr.cnrs.lacito.liftapi.model.LiftTrait;
 
 public class MainController {
 
@@ -78,9 +84,12 @@ public class MainController {
     private FilteredList<SenseRow> filteredSenses;
     private SortedList<SenseRow> sortedSenses;
 
-    // DOM
-    private Document liftDoc;
+    // ===== lift-api =====
+    private final LiftService liftService = new LiftService();
+    private LiftDictionary dictionary;
+    private Path currentFile;
 
+    // selection
     private EntryRow selectedEntryRow;
     private SenseRow selectedSenseRow;
 
@@ -98,14 +107,32 @@ public class MainController {
     private void initialize() {
         setupEntryTableWithHeaderFilters();
         setupSenseTableWithHeaderFilters();
-
         setupFilteringLists();
 
-        loadLiftFromResources("/lift/20240828Lift.lift");
+        searchField.textProperty().addListener((obs, o, n) -> {
+            updateEntryPredicate();
+            updateSensePredicate();
+        });
 
         setupSelection();
 
-        showEntries();
+        // ✅ IMPORTANT : attendre que la Scene existe (sinon showToast crash)
+        Platform.runLater(() -> {
+            loadLiftFromResources("/lift/20240828Lift.lift"); // fichier par défaut
+            showEntries();
+        });
+    }
+
+    private LiftEntry findEntryById(String entryId) {
+        if (dictionary == null) return null;
+        return dictionary.getLiftDictionaryComponents().getEntryById().get(entryId);
+    }
+
+    private void upsertTraitOnEntry(LiftEntry entry, String traitName, String newValue) {
+        // supprimer les anciens traits morph-type
+        entry.getTraits().removeIf(t -> traitName.equals(t.getName()));
+        // ajouter le nouveau
+        entry.addTrait(LiftTrait.of(traitName, newValue));
     }
 
     // =========================================================
@@ -117,6 +144,8 @@ public class MainController {
         setActive(btnEntries);
         setView(entriesView, sensesView);
         editSubTitleLabel.setText("Entrée sélectionnée");
+        updateEntryPredicate();
+
     }
 
     @FXML
@@ -124,6 +153,7 @@ public class MainController {
         setActive(btnSenses);
         setView(sensesView, entriesView);
         editSubTitleLabel.setText("Sens sélectionné");
+        updateSensePredicate(); // <-- force refresh
     }
 
     private void setView(VBox toShow, VBox toHide) {
@@ -156,18 +186,30 @@ public class MainController {
     private void openLiftFile() {
         FileChooser fc = new FileChooser();
         fc.setTitle("Ouvrir un fichier LIFT");
-        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("LIFT (*.lift)", "*.lift"));
+        fc.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("LIFT (*.lift)", "*.lift")
+        );
 
-        Window owner = entryTable.getScene().getWindow();
-        File f = fc.showOpenDialog(owner);
+        Window w = (entryTable != null && entryTable.getScene() != null) ? entryTable.getScene().getWindow() : null;
+        File f = fc.showOpenDialog(w);
         if (f == null) return;
 
         try {
-            loadLiftFromFile(f.toPath());
-            showToast("✅ Fichier chargé : " + f.getName());
+            System.out.println("OPENING: " + f.getAbsolutePath());
+
+            dictionary = liftService.load(f.toPath());
+            currentFile = f.toPath();
+
+            fillFromLiftApi();   // ta méthode existante pour remplir les tables
+            showToast("✅ Fichier ouvert");
+
         } catch (Exception e) {
             e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Erreur", "Impossible d’ouvrir le fichier.\n" + e.getMessage());
+            showAlert(
+                    Alert.AlertType.ERROR,
+                    "Erreur",
+                    "Impossible d’ouvrir le fichier.\n" + e.getMessage()
+            );
         }
     }
 
@@ -182,7 +224,6 @@ public class MainController {
         entryCatFilter = createHeaderFilterField("Filtrer Catégorie...");
 
         TableColumn<EntryRow, String> colId = new TableColumn<>();
-
         colId.setCellValueFactory(d -> d.getValue().idProperty());
         colId.setPrefWidth(260);
         colId.setGraphic(makeHeader("ID", entryIdFilter));
@@ -201,7 +242,6 @@ public class MainController {
         colId.setSortable(false);
         colLemma.setSortable(false);
         colGram.setSortable(false);
-
     }
 
     private void setupSenseTableWithHeaderFilters() {
@@ -235,7 +275,6 @@ public class MainController {
         colSenseId.setSortable(false);
         colCat.setSortable(false);
         colGloss.setSortable(false);
-
     }
 
     private VBox makeHeader(String title, TextField filterField) {
@@ -252,16 +291,14 @@ public class MainController {
         TextField tf = new TextField();
         tf.setPromptText(prompt);
         tf.getStyleClass().add("header-filter");
-
-        // IMPORTANT: prevent sorting when clicking inside the filter field
-        tf.addEventFilter(MouseEvent.MOUSE_PRESSED, MouseEvent::consume);
-        tf.addEventFilter(MouseEvent.MOUSE_CLICKED, MouseEvent::consume);
-
+        tf.setFocusTraversable(true);
+        tf.setOnMouseClicked(e -> tf.requestFocus());
         return tf;
     }
 
+
     // =========================================================
-    // FILTERED LISTS (focus stable)
+    // FILTERED LISTS
     // =========================================================
 
     private void setupFilteringLists() {
@@ -290,10 +327,23 @@ public class MainController {
         String fForm = safe(entryFormFilter.getText());
         String fCat = safe(entryCatFilter.getText());
 
+        String global = safe(searchField.getText()); // <-- nouveau
+
         filteredEntries.setPredicate(r -> {
-            if (!fId.isEmpty() && !safe(r.id()).contains(fId)) return false;
-            if (!fForm.isEmpty() && !safe(r.lemma()).contains(fForm)) return false;
-            if (!fCat.isEmpty() && !safe(r.gramCat()).contains(fCat)) return false;
+            String id = safe(r.id());
+            String form = safe(r.lemma());
+            String cat = safe(r.gramCat());
+
+            // Filtre global (barre du haut)
+            if (!global.isEmpty() && !(id.contains(global) || form.contains(global) || cat.contains(global))) {
+                return false;
+            }
+
+            // Filtres colonnes
+            if (!fId.isEmpty() && !id.contains(fId)) return false;
+            if (!fForm.isEmpty() && !form.contains(fForm)) return false;
+            if (!fCat.isEmpty() && !cat.contains(fCat)) return false;
+
             return true;
         });
 
@@ -306,23 +356,41 @@ public class MainController {
         String fCat = safe(senseCatFilter.getText());
         String fGloss = safe(senseGlossFilter.getText());
 
+        String global = safe(searchField.getText()); // <-- global
+
         filteredSenses.setPredicate(r -> {
-            if (!fEntry.isEmpty() && !safe(r.entryId()).contains(fEntry)) return false;
-            if (!fSense.isEmpty() && !safe(r.senseId()).contains(fSense)) return false;
-            if (!fCat.isEmpty() && !safe(r.category()).contains(fCat)) return false;
-            if (!fGloss.isEmpty() && !safe(r.gloss()).contains(fGloss)) return false;
+            String entryId = safe(r.entryId());
+            String senseId = safe(r.senseId());
+            String cat = safe(r.category());
+            String gloss = safe(r.gloss());
+
+            // Global search (barre en haut)
+            if (!global.isEmpty() && !(entryId.contains(global)
+                    || senseId.contains(global)
+                    || cat.contains(global)
+                    || gloss.contains(global))) {
+                return false;
+            }
+
+            // Column filters
+            if (!fEntry.isEmpty() && !entryId.contains(fEntry)) return false;
+            if (!fSense.isEmpty() && !senseId.contains(fSense)) return false;
+            if (!fCat.isEmpty() && !cat.contains(fCat)) return false;
+            if (!fGloss.isEmpty() && !gloss.contains(fGloss)) return false;
+
             return true;
         });
 
         sensesCountLabel.setText(sortedSenses.size() + " sens");
     }
 
+
     private String safe(String s) {
         return s == null ? "" : s.trim().toLowerCase();
     }
 
     // =========================================================
-    // SELECTION (simple mapping for now)
+    // SELECTION
     // =========================================================
 
     private void setupSelection() {
@@ -344,30 +412,46 @@ public class MainController {
                 gramCatField.clear();
                 return;
             }
-            // simple mapping: category->morphTypeField, gloss->gramCatField (tu renommeras après)
+            // placeholder mapping
             morphTypeField.setText(n.category());
             gramCatField.setText(n.gloss());
         });
     }
 
     // =========================================================
-    // LOAD LIFT
+    // LOAD LIFT (lift-api)
     // =========================================================
 
     private void loadLiftFromResources(String resourcePath) {
         masterEntryRows.clear();
         masterSenseRows.clear();
-        liftDoc = null;
+        dictionary = null;
+        currentFile = null;
 
-        try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
-            if (is == null) {
+        try {
+            var url = getClass().getResource(resourcePath);
+            if (url == null) {
                 showAlert(Alert.AlertType.ERROR, "Fichier introuvable", "Resource introuvable: " + resourcePath);
                 return;
             }
 
-            liftDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is);
-            liftDoc.getDocumentElement().normalize();
-            fillFromDom();
+            // ✅ Si on est en IDE, le resource est un vrai fichier => on sauvegarde directement dessus
+            if ("file".equalsIgnoreCase(url.getProtocol())) {
+                Path p = Path.of(url.toURI());
+                loadLiftFromPath(p);        // currentFile = p
+                showToast("📄 Fichier chargé (mode fichier) : " + p.getFileName());
+                return;
+            }
+
+            // ✅ Si on est en JAR, on ne peut pas écrire dans le JAR => on passe par un temp
+            try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
+                Path tmp = Files.createTempFile("lift-", ".lift");
+                Files.copy(is, tmp, StandardCopyOption.REPLACE_EXISTING);
+
+                loadLiftFromPath(tmp);
+                currentFile = null; // force Save As (car ce temp n'est pas le "vrai" fichier source)
+                showToast("📦 Chargé depuis JAR (lecture seule) : Save As obligatoire");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -375,92 +459,197 @@ public class MainController {
         }
     }
 
-    private void loadLiftFromFile(Path path) throws Exception {
+    private void loadLiftFromPath(Path path) throws Exception {
         masterEntryRows.clear();
         masterSenseRows.clear();
 
-        liftDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(Files.newInputStream(path));
-        liftDoc.getDocumentElement().normalize();
+        currentFile = path;
+        dictionary = liftService.load(path);
 
-        fillFromDom();
+        fillFromLiftApi();
+        updateEntryPredicate();
+        updateSensePredicate();
+    }
+    private String firstText(MultiText mt) {
+        if (mt == null) return "";
+        return mt.getForms().stream()
+                .findFirst()
+                .map(Form::toString)
+                .orElse("");
     }
 
-    private void fillFromDom() {
-        NodeList entryNodes = liftDoc.getElementsByTagName("entry");
+    private String traitValue(java.util.List<LiftTrait> traits, String name) {
+        if (traits == null) return "";
+        for (LiftTrait t : traits) {
+            if (name.equals(t.getName())) {
+                return t.getValue();
+            }
+        }
+        return "";
+    }
+    private String stripTags(String s) {
+        if (s == null) return "";
+        return s.replaceAll("<[^>]+>", "").trim();
+    }
 
-        for (int i = 0; i < entryNodes.getLength(); i++) {
-            Element entryEl = (Element) entryNodes.item(i);
-            String entryId = entryEl.getAttribute("id");
+    private void fillFromLiftApi() {
+        masterEntryRows.clear();
+        masterSenseRows.clear();
 
-            String lemma = extractFirstText(entryEl, "lexical-unit", "form", "text");
+        if (dictionary == null) {
+            entriesCountLabel.setText("0 entrées");
+            sensesCountLabel.setText("0 sens");
+            return;
+        }
 
+        var comps = dictionary.getLiftDictionaryComponents();
+        var entries = comps.getAllEntries();
+
+        for (LiftEntry e : entries) {
+            String entryId = e.getId().orElse("");
+
+            // lemma: première forme disponible
+            String lemma = stripTags(firstText(e.getForms()));
+
+            // morph-type: trait côté entry
+            String morphType = traitValue(e.getTraits(), "morph-type");
+
+            // gramCat (catégorie) : la lib met grammatical-info surtout dans les senses
+            // donc on prend le grammatical-info du 1er sense si présent
             String gramCat = "";
-            NodeList gramNodes = entryEl.getElementsByTagName("grammatical-info");
-            if (gramNodes.getLength() > 0) gramCat = ((Element) gramNodes.item(0)).getAttribute("value");
-
-            String morphType = "";
-            NodeList traits = entryEl.getElementsByTagName("trait");
-            for (int t = 0; t < traits.getLength(); t++) {
-                Element tr = (Element) traits.item(t);
-                if ("morph-type".equals(tr.getAttribute("name"))) {
-                    morphType = tr.getAttribute("value");
-                    break;
-                }
+            if (!e.getSenses().isEmpty()) {
+                LiftSense s0 = e.getSenses().get(0);
+                gramCat = s0.getGrammaticalInfo()
+                        .map(GrammaticalInfo::getGramInfoValue)
+                        .orElse("");
             }
 
             masterEntryRows.add(new EntryRow(entryId, lemma, gramCat, morphType));
 
-            NodeList senses = entryEl.getElementsByTagName("sense");
-            for (int s = 0; s < senses.getLength(); s++) {
-                Element senseEl = (Element) senses.item(s);
-                String senseId = senseEl.getAttribute("id");
+            // senses
+            for (LiftSense s : e.getSenses()) {
+                String senseId = s.getId().orElse("");
 
-                String cat = "";
-                NodeList gi = senseEl.getElementsByTagName("grammatical-info");
-                if (gi.getLength() > 0) cat = ((Element) gi.item(0)).getAttribute("value");
+                String cat = s.getGrammaticalInfo()
+                        .map(GrammaticalInfo::getGramInfoValue)
+                        .orElse("");
 
-                String gloss = extractFirstText(senseEl, "gloss", "text");
+                String gloss = stripTags(firstText(s.getGloss()));
 
                 masterSenseRows.add(new SenseRow(entryId, senseId, cat, gloss));
             }
         }
 
-        updateEntryPredicate();
-        updateSensePredicate();
-    }
-
-    private String extractFirstText(Element root, String... tags) {
-        Node current = root;
-        for (String tag : tags) {
-            if (!(current instanceof Element)) return "";
-            NodeList list = ((Element) current).getElementsByTagName(tag);
-            if (list.getLength() == 0) return "";
-            current = list.item(0);
-        }
-        return current.getTextContent() == null ? "" : current.getTextContent().trim();
+        entriesCountLabel.setText(masterEntryRows.size() + " entrées");
+        sensesCountLabel.setText(masterSenseRows.size() + " sens");
     }
 
     // =========================================================
-    // RIGHT FORM (placeholder)
+    // RIGHT FORM
     // =========================================================
 
     @FXML
     private void applyEdit() {
-        showToast("✅ Appliquer (logique édition à compléter)");
+        if (dictionary == null) {
+            showAlert(Alert.AlertType.WARNING, "Aucun fichier", "Charge un fichier .lift d’abord.");
+            return;
+        }
+
+        // On applique uniquement si une entrée est sélectionnée dans la vue Entrées
+        if (!entriesView.isVisible() || selectedEntryRow == null) {
+            showAlert(Alert.AlertType.INFORMATION, "Sélection", "Sélectionne une entrée dans le tableau.");
+            return;
+        }
+
+        String entryId = selectedEntryRow.id();
+        LiftEntry entry = findEntryById(entryId);
+        if (entry == null) {
+            showAlert(Alert.AlertType.ERROR, "Erreur", "Entrée introuvable: " + entryId);
+            return;
+        }
+
+        String newMorph = morphTypeField.getText() == null ? "" : morphTypeField.getText().trim();
+        String newGram = gramCatField.getText() == null ? "" : gramCatField.getText().trim();
+
+        // 1) morph-type (trait sur entry)
+        if (!newMorph.isEmpty()) {
+            upsertTraitOnEntry(entry, "morph-type", newMorph);
+        } else {
+            // si vide => on supprime le trait
+            entry.getTraits().removeIf(t -> "morph-type".equals(t.getName()));
+        }
+
+        // 2) grammatical-info (dans le 1er sense, car c’est comme ça que tu l’affiches)
+        if (!entry.getSenses().isEmpty()) {
+            LiftSense s0 = entry.getSenses().get(0);
+            if (!newGram.isEmpty()) {
+                s0.setGrammaticalInfo(newGram);
+            } else {
+                s0.clearGrammaticalInfo();
+            }
+
+        }
+
+        // 3) Rafraîchir les tables (simple et fiable)
+        String keepSelected = entryId;
+        fillFromLiftApi();
+        updateEntryPredicate();
+        updateSensePredicate();
+
+        // Reselection
+        for (EntryRow r : masterEntryRows) {
+            if (r.id().equals(keepSelected)) {
+                entryTable.getSelectionModel().select(r);
+                entryTable.scrollTo(r);
+                break;
+            }
+        }
+
+        showToast("✅ Modifications appliquées");
     }
+
 
     @FXML
     private void saveFile() {
-        if (liftDoc == null) return;
+        if (dictionary == null) {
+            showAlert(Alert.AlertType.WARNING, "Aucun fichier", "Charge un fichier .lift d’abord.");
+            return;
+        }
+
+        // ✅ Appliquer automatiquement avant de sauvegarder
+        if (entriesView.isVisible() && selectedEntryRow != null) {
+            applyEdit();
+        }
+
         try {
-            Path out = Path.of(System.getProperty("user.home"), "written.lift");
-            writeDocument(liftDoc, out);
-            showToast("✅ Sauvegardé : " + out.getFileName());
+            System.out.println("SAVE currentFile = " + currentFile);
+
+            // ✅ si currentFile existe -> on écrase le même fichier
+            if (currentFile != null) {
+                dictionary.save(currentFile.toFile());
+                showToast("✅ Sauvegardé : " + currentFile.toAbsolutePath());
+                return;
+            }
+
+            // ✅ Sinon Save As
+            FileChooser fc = new FileChooser();
+            fc.setTitle("Enregistrer sous...");
+            fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("LIFT (*.lift)", "*.lift"));
+
+            Window w = (entryTable != null && entryTable.getScene() != null) ? entryTable.getScene().getWindow() : null;
+            File out = fc.showSaveDialog(w);
+            if (out == null) return;
+
+            dictionary.save(out);
+            currentFile = out.toPath();
+            showToast("✅ Sauvegardé : " + out.getAbsolutePath());
+
         } catch (Exception e) {
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Erreur", "Impossible de sauvegarder.\n" + e.getMessage());
         }
     }
+
 
     @FXML
     private void cancelEdit() {
@@ -468,22 +657,17 @@ public class MainController {
         gramCatField.clear();
     }
 
-    private void writeDocument(Document doc, Path outFile) throws Exception {
-        Files.createDirectories(outFile.getParent());
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-
-        try (OutputStream os = Files.newOutputStream(outFile)) {
-            transformer.transform(new DOMSource(doc), new StreamResult(os));
-        }
-    }
-
     // =========================================================
     // TOAST + ALERT
     // =========================================================
 
     private void showToast(String message) {
+        // ✅ évite crash si la scène n’est pas encore prête
+        if (entryTable == null || entryTable.getScene() == null || entryTable.getScene().getWindow() == null) {
+            System.out.println("[TOAST] " + message);
+            return;
+        }
+
         Window owner = entryTable.getScene().getWindow();
 
         Label text = new Label(message);
@@ -493,11 +677,11 @@ public class MainController {
         box.setAlignment(Pos.CENTER_LEFT);
         box.setPadding(new Insets(10, 14, 10, 14));
         box.setStyle("""
-            -fx-background-color: rgba(20, 20, 20, 0.92);
-            -fx-background-radius: 12;
-            -fx-border-radius: 12;
-            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 18, 0, 0, 6);
-        """);
+        -fx-background-color: rgba(20, 20, 20, 0.92);
+        -fx-background-radius: 12;
+        -fx-border-radius: 12;
+        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 18, 0, 0, 6);
+    """);
 
         Popup popup = new Popup();
         popup.getContent().add(box);
@@ -530,6 +714,7 @@ public class MainController {
         wait.play();
     }
 
+
     private void showAlert(Alert.AlertType type, String title, String msg) {
         Alert a = new Alert(type);
         a.setTitle(title);
@@ -541,7 +726,7 @@ public class MainController {
     }
 
     // =========================================================
-    // MODELS
+    // MODELS (tu pourras les déplacer dans org.example.model)
     // =========================================================
 
     public static class EntryRow {

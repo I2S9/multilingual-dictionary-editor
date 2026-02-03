@@ -81,6 +81,8 @@ public final class LiftSaxHandler extends DefaultHandler {
         
         // First switch: create object
         switch (localName) {
+
+
             case LiftVocabulary.LIFT_LOCAL_NAME:
                 String version = attributes.getValue(LiftVocabulary.VERSION_ATTRIBUTE);
                 //if (!version.equals("15")) throw new UnsupportedVersionException("The lift-api read dictionary with version " + LiftVocabulary.CURRENT_LIFT_VERSION + "; found: " + version);
@@ -209,6 +211,7 @@ public final class LiftSaxHandler extends DefaultHandler {
                     throw new IllegalStateException("Expecting an objet implementing HasTrait, found: " + elementStack.peek().toString());
                 }
                 break;
+
             case LiftVocabulary.GRAM_INFO_LOCAL_NAME:
                 inGrammaticalInfo = true;
                 if (elementStack.peek() instanceof LiftSense s) {
@@ -251,6 +254,11 @@ public final class LiftSaxHandler extends DefaultHandler {
             case LiftVocabulary.USAGE_LOCAL_NAME:
                  throw new IllegalStateException("Not implemented yet");
                  //break;
+            case LiftVocabulary.HEADER_RANGE_ABBREV_LOCAL_NAME:
+            case LiftVocabulary.ABREVIATION_LOCAL_NAME:
+                break;
+
+
             default:
                 throw new IllegalStateException("Unknown start element: " + localName);
                 //break;
@@ -263,14 +271,7 @@ public final class LiftSaxHandler extends DefaultHandler {
         // If the following element can be form or gloss,
         // we register a MultiText object
         switch (localName) {
-            case LiftVocabulary.ABREVIATION_LOCAL_NAME:
-            // in a range or a range element
-                switch (elementStack.peek()) {
-                    case LiftHeaderRange r ->  multiTextStack.push(r.getAbbrev());
-                    case LiftHeaderRangeElement re -> multiTextStack.push(re.getAbbrev());
-                    default -> throw new IllegalStateException();
-                }
-                break;
+
             case LiftVocabulary.FIELD_LOCAL_NAME:
                 switch (elementStack.peek()) {
                     case LiftField f ->  multiTextStack.push(f.getText());
@@ -333,13 +334,13 @@ public final class LiftSaxHandler extends DefaultHandler {
                 }
                 break;
             case LiftVocabulary.HEADER_RANGE_ABBREV_LOCAL_NAME:
-            // header only in range and range-element
                 switch(elementStack.peek()) {
                     case LiftHeaderRange r -> multiTextStack.push(r.getAbbrev());
                     case LiftHeaderRangeElement re -> multiTextStack.push(re.getAbbrev());
                     default -> throw new IllegalStateException();
                 }
                 break;
+
             case LiftVocabulary.LABEL_LOCAL_NAME:
             // label is on range-element, range, field-definition, and "URLRef-content" i.e. illustration, media
                 switch(elementStack.peek()) {
@@ -384,6 +385,8 @@ public final class LiftSaxHandler extends DefaultHandler {
 
         // First switch                                
         switch (localName) {
+
+
             // cases where we are leaving a multitext object
             case LiftVocabulary.FIELD_LOCAL_NAME:
             case LiftVocabulary.SUBSENSE_LOCAL_NAME:
@@ -398,10 +401,13 @@ public final class LiftSaxHandler extends DefaultHandler {
             case LiftVocabulary.CITATION_LOCAL_NAME:
             case LiftVocabulary.DEFINITION_LOCAL_NAME:
             case LiftVocabulary.TRANSLATION_LOCAL_NAME:
-            case LiftVocabulary.HEADER_DESCRIPTION_LOCAL_NAME: // duplicate constant "description"
+
             case LiftVocabulary.HEADER_RANGE_ABBREV_LOCAL_NAME:
             case LiftVocabulary.LABEL_LOCAL_NAME: // in range, range-element, illustration or media
+                multiTextStack.pop();
+                break;
             case LiftVocabulary.ABREVIATION_LOCAL_NAME:
+
             case LiftVocabulary.HEADER_FIELD_DEFINITION_LOCAL_NAME:
                 multiTextStack.pop();
                 break;
@@ -424,6 +430,9 @@ public final class LiftSaxHandler extends DefaultHandler {
             case LiftVocabulary.HEADER_LOCAL_NAME:
             case LiftVocabulary.ILLUSTRATION_LOCAL_NAME:
             case LiftVocabulary.RELATION_LOCAL_NAME:
+            case LiftVocabulary.HEADER_DESCRIPTION_LOCAL_NAME:   // ✅ AJOUTE ÇA
+                break;
+
             case LiftVocabulary.MEDIA_LOCAL_NAME:
                 break;
             default:
@@ -434,6 +443,11 @@ public final class LiftSaxHandler extends DefaultHandler {
 
         // second switch
         switch(localName) {
+            case LiftVocabulary.ABREVIATION_LOCAL_NAME:
+           break;
+            case LiftVocabulary.HEADER_RANGE_ABBREV_LOCAL_NAME:
+                break;
+
             case LiftVocabulary.ENTRY_LOCAL_NAME:
             case LiftVocabulary.SUBSENSE_LOCAL_NAME:
             case LiftVocabulary.SENSE_LOCAL_NAME:
@@ -454,6 +468,8 @@ public final class LiftSaxHandler extends DefaultHandler {
             case LiftVocabulary.HEADER_FIELD_DEFINITION_LOCAL_NAME:
                 elementStack.pop();
                 break;
+            case LiftVocabulary.HEADER_DESCRIPTION_LOCAL_NAME: // ✅ AJOUT ICI
+
             case LiftVocabulary.FORM_LOCAL_NAME:
             case LiftVocabulary.GLOSS_LOCAL_NAME:
                  currentFormContent = null;

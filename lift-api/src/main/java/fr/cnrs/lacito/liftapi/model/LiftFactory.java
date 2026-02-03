@@ -174,13 +174,29 @@ public final class LiftFactory implements LiftDictionaryCompoments {
     }
 
     public LiftField createField(Attributes attributes, AbstractExtensibleWithField parent) {
+
+        // 1) Récupérer "type" (avec et sans namespace)
         String type = attributes.getValue(LiftVocabulary.LIFT_URI, "type");
-        if (type == null) throw new IllegalArgumentException("Attribute type on field element cannot be null");
+        if (type == null) type = attributes.getValue("type");
+
+        // 2) Certains fichiers utilisent "name" ou "tag" à la place de "type"
+        if (type == null) type = attributes.getValue("name");
+        if (type == null) type = attributes.getValue("tag");
+
+        // 3) Fallback : ne pas crasher si rien n'est présent
+        if (type == null || type.isBlank()) {
+            type = "unnamed-field-" + System.nanoTime();
+        }
+
         LiftField f = new LiftField(type);
+
+        // (Optionnel) si tu veux aussi stocker d'autres attributs plus tard, tu peux ici
         // populateWithAttribute(f, attributes);
+
         parent.addField(f);
         this.allFields.add(f);
         this.allMetaLanguagesMultiText.add(f.getText());
+
         return f;
     }
 
@@ -314,22 +330,31 @@ public final class LiftFactory implements LiftDictionaryCompoments {
     }
 
     public LiftHeaderFieldDefinition create_field_definition(Attributes attributes, LiftHeader parent) {
-        String name = attributes.getValue(LiftVocabulary.LIFT_URI, "name");
-        if (name == null) throw new IllegalArgumentException("An attribute 'name' is required on field definition");
+
+        String name = attributes.getValue("name");
+        if (name == null) name = attributes.getValue("tag"); // LIFT 0.13
+        if (name == null || name.isBlank()) {
+            name = "unnamed-field-definition-" + System.nanoTime();
+        }
+
         LiftHeaderFieldDefinition f = new LiftHeaderFieldDefinition(name, parent);
 
         String fieldclass = attributes.getValue(LiftVocabulary.LIFT_URI, "class");
+        if (fieldclass == null) fieldclass = attributes.getValue("class");
         if (fieldclass != null) f.setFClass(Optional.of(fieldclass));
 
         String type = attributes.getValue(LiftVocabulary.LIFT_URI, "type");
+        if (type == null) type = attributes.getValue("type");
         if (type != null) f.setType(Optional.of(type));
 
         String optionRange = attributes.getValue(LiftVocabulary.LIFT_URI, "option-range");
+        if (optionRange == null) optionRange = attributes.getValue("option-range");
         if (optionRange != null) f.setOptionRange(Optional.of(optionRange));
 
         String writingSystem = attributes.getValue(LiftVocabulary.LIFT_URI, "writing-system");
+        if (writingSystem == null) writingSystem = attributes.getValue("writing-system");
         if (writingSystem != null) f.setWritingSystem(Optional.of(writingSystem));
-        
+
         parent.getFields().add(f);
         return f;
     }

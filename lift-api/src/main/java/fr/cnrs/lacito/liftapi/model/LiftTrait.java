@@ -30,6 +30,9 @@ public final class LiftTrait
         this.name = name;
         this.value = value;
     }
+    public static LiftTrait of(String name, String value) {
+        return new LiftTrait(name, value);
+    }
 
     protected void setParent(HasTrait parent) {
         this.parent = parent;

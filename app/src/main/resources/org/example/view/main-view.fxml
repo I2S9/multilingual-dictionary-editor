@@ -8,7 +8,7 @@
 
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="org.example.MainController"
+            fx:controller="org.example.controller.MainController"
             prefWidth="1200.0" prefHeight="700.0"
             stylesheets="@styles.css"
             styleClass="root">
@@ -26,7 +26,7 @@
                 <Button fx:id="btnEntries" text="Entrées" styleClass="nav-item" onAction="#showEntries">
                     <graphic>
                         <ImageView fitWidth="34.0" fitHeight="34.0" preserveRatio="true" smooth="true">
-                            <image><Image url="@icons/rechercher.png"/></image>
+                            <image><Image url="@../icons/rechercher.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
@@ -34,7 +34,7 @@
                 <Button fx:id="btnSenses" text="Sens" styleClass="nav-item" onAction="#showSenses">
                     <graphic>
                         <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
-                            <image><Image url="@icons/notes.png"/></image>
+                            <image><Image url="@../icons/notes.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
@@ -42,7 +42,7 @@
                 <Button text="Exemples" styleClass="nav-item">
                     <graphic>
                         <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
-                            <image><Image url="@icons/notes-autocollantes.png"/></image>
+                            <image><Image url="@../icons/notes-autocollantes.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
@@ -50,7 +50,7 @@
                 <Button text="Variantes" styleClass="nav-item">
                     <graphic>
                         <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
-                            <image><Image url="@icons/livre-sur-les-nuages.png"/></image>
+                            <image><Image url="@../icons/livre-sur-les-nuages.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
@@ -58,7 +58,7 @@
                 <Button text="Étymologie" styleClass="nav-item">
                     <graphic>
                         <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
-                            <image><Image url="@icons/etudes-de-cas.png"/></image>
+                            <image><Image url="@../icons/etudes-de-cas.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
@@ -72,7 +72,7 @@
                 <Button text="Navigation par facette" styleClass="nav-item">
                     <graphic>
                         <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
-                            <image><Image url="@icons/navigateur-web.png"/></image>
+                            <image><Image url="@../icons/navigateur-web.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
@@ -80,7 +80,7 @@
                 <Button text="Langue objet" styleClass="nav-item">
                     <graphic>
                         <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
-                            <image><Image url="@icons/globe-terrestre.png"/></image>
+                            <image><Image url="@../icons/globe-terrestre.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
@@ -88,7 +88,7 @@
                 <Button text="Méta-langues / Tags" styleClass="nav-item">
                     <graphic>
                         <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
-                            <image><Image url="@icons/tag-incline.png"/></image>
+                            <image><Image url="@../icons/tag-incline.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
@@ -96,7 +96,7 @@
                 <Button text="Annotations" styleClass="nav-item">
                     <graphic>
                         <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
-                            <image><Image url="@icons/google-docs.png"/></image>
+                            <image><Image url="@../icons/google-docs.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
@@ -104,7 +104,7 @@
                 <Button text="Type de note" styleClass="nav-item">
                     <graphic>
                         <ImageView fitWidth="30.0" fitHeight="30.0" preserveRatio="true">
-                            <image><Image url="@icons/notes.png"/></image>
+                            <image><Image url="@../icons/notes.png"/></image>
                         </ImageView>
                     </graphic>
                 </Button>
@@ -124,7 +124,7 @@
             <Button fx:id="menuButton" onAction="#toggleSidebar" styleClass="menu-icon-btn">
                 <graphic>
                     <ImageView fitWidth="22.0" fitHeight="22.0" preserveRatio="true">
-                        <image><Image url="@icons/menu.png"/></image>
+                        <image><Image url="@../icons/menu.png"/></image>
                     </ImageView>
                 </graphic>
             </Button>

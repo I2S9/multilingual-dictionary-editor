@@ -42,6 +42,9 @@ public final class LiftSense
     public void setGrammaticalInfo(String value) {
         this.setGrammaticalInfo(new GrammaticalInfo(value));
     }
+    public void clearGrammaticalInfo() {
+        this.grammaticalInfo = java.util.Optional.empty();
+    }
 
     @Override
     public void addRelation(LiftRelation relation) {
