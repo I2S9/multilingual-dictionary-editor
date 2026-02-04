@@ -1,7 +1,7 @@
 # GUI pour l'édition d'un dictionnaire multilingue
 
 > Ce projet fournit une application de bureau permettant de **parcourir** et **modifier** un dictionnaire multilingue stocké au format **LIFT**. L’interface est construite en **JavaFX** et s’appuie sur une bibliothèque dédiée (`lift-api`) pour manipuler les données LIFT, avec un module séparé pour l’application graphique (`dictionary-editor-fx`).
-
+>
 > Le dépôt est organisé en **2 modules Maven** : - **`lift-api/`** : bibliothèque Java pour charger/manipuler/sauvegarder des dictionnaires LIFT. - **`dictionary-editor-fx/`** : application JavaFX (UI) qui s’appuie sur `lift-api`.
 
 ## Stack technique
