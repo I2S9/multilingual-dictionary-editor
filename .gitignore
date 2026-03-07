@@ -1,2 +1,11 @@
-﻿**/target/
+# IDE
+.idea/
+.vscode/
+
+# local files
+*.lift
+*.lift-ranges
+
+# build
+target/
 *.class
