@@ -1,0 +1,157 @@
+# javafx lift dictionnaire
+
+Bravo !!!
+
+Bravo à nouveau pour les avancées très rapides et le caractère parfaitement fonctionnel de l'ensemble.
+
+A/ Remarques générales :
+
+- pour les classes java, utiliser comme espace de nom fr.cnrs.lacito.liftgui plutôt que com.example.ui
+  (si les outils de refactoring permettent de le faire rapidement et que ça ne crée pas de problème git...)
+- Bravo pour avoir implémenté également la lecture des fichiers externe définissant les ranges, référencés par href.
+  Vous êtes vous occupé de la serialisation des ranges et range-element? (sinon, ce n'est pas une priorité)
+  si oui, avez vous pensé à ne pas écraser un fichier xml partagé par plusieurs range/@href lors de l'écriture de chaque range...
+- que sont devenus les problèmes des <span> dans les champs multitext?
+- utiliser un système de log pour écrire les erreurs? il y en a un déjà utilisé dans lift-api
+
+- Dans les liens entre fiches, que ce soit en "montant" vers un objet parent :
+      (exemple : "back to sense : " sur la fiche d'un exemple, ou "back to entry" depuis la fiche d'un sens)
+  ou en descendant vers un objet enfant
+    (exemple : le lien vers les sens depuis une entrée, ou le lien vers les exemple depuis un sens)
+  on pourrait retirer l'id et afficher juste la forme de l'entrée, la glose du sens, ou le numéro de l'exemple.
+
+- Pour les notes, les variants et les étymologies (et les relations, à
+ajouter, cf. ci-dessous), dans "Objets", depuis leur fiche, il n'y a pas de
+lien pour accéder à la fiche de leur objet parent.
+
+Un manque fonctionnel est la possibilité d'aller depuis une ligne dans les
+tableaux "Traits" et "Field" de Category browser vers tous les objets ayant
+le trait ou field du type correspondant. C'est discuté ci-dessous dans 3b/
+et 3d/. C'est peut être un trop gros changement maintenant.
+
+B/ Remarques en parcourant la colonne de gauche :
+
+1/ Objets
+
+- Remarques générales sur les tableaux
+    - problème d'alignement des colonnes avec les listes drop-down.
+    - il est possible d'utiliser un layout grid pour régler ce problème
+    - Mettre différents types de drop-down :
+    - drop down avec valeur unique si une colonne contient des valeurs répétées
+    - un champ texte si la colonne ne contient pas de valeur répétée
+  - Formulaire "Edit form" pour une entrée sélectionnée :
+    - les traits : pas assez d'espace pour voir "Nom" et "Valeur" d'un trait.
+  - Annotation : on ne peut pas en créer.
+
+- Remarque générale sur les formulaires de droite, associés aux tableaux :
+  - pour Sense : afficher le texte du sens comme titre (en haut, en noir, plutôt que son id.) si existe en plusieures langues, les séparer par des " / ", ou les mettre les uns en dessous des autres avec le code de la langue + ".". devant (en grisé, comme la partie du discours dans le formualaire des sens?) ?
+  - création : ne marche pas pour annotation (il faut le mettre dans l'applet? sinon pour objets inclus plus difficiles)
+  - dans le champ multitexte pour éditeur : augmenter la marge à gauche et à droite de l'applet "Annotations"...
+  - Le champ multitexte permet de créer une nouvelle langue dans le drop down pour les langues. Il serait préférable
+    que le champ dropdown soit limité aux valeurs fournies (aux langues existantes) et qu'on ne puisse pas en créer ici.
+  - les mécanismes de création d'objet ne sont pas tous branchés mais vous le mentionnez dans votre rapport.
+  - une petite bizarrerie : si je crée un exemple dans un formualaire de sense, le texte de l'exemple est bien conservé (je le retrouve dans le tableau des exemples) mais ce qui est écrit dans "source" est perdu.
+ 
+- Entrées :
+  - tableau
+    - colonne code : c'est quoi ? retirer la colonne ?
+  - formulaire
+    - le lien vers sens affiche son id puis sa glose.
+    C'est super d'avoir rajouté la glose, mais pourrait-on retirer l'ID ?
+    Ce n'est pas informatif de l'arricher, et ça fait qu'on voit pas la glose.
+    (déjà mentionné dans ma proposition générale ci-dessus concernant les liens)
+- sense :
+  - tableau :
+    - mettre une première colonne(s) "entrée parente" multitexte avec la forme de l'entrée dont c'est le sens.
+  - formulaire
+    - dans le formulaire : id à mettre en bas et en gris (comme pour Entries : un bloc "identity" avec les dates de création et de modification)
+
+- Example
+  - tableau
+    - mettre une première colonne(s) "sens parent" multitexte avec la forme du sens dont c'est l'exemple.
+    - rajouter traduction dans le tableau. Un multitexte correspond à un traduction-type : autant de groupes de colonnes que de type de traduction existant dans le dictionnaire
+ 
+- Variants
+  - mettre une première colonne(s) "entrée parent" multitexte avec la forme du sens dont c'est une variante.
+    (en multitexte grisé (= non modifiable) dans le formulaire)
+- Etymologie : il n'y a pas tous les champs (est-ce moi qui n'ait pas tout mis dans lift-api ?)
+  - mettre etymology/form comme colonne(s) multitexte
+- Ajouter un tableau : Relation
+  - colonnes :
+     - colonne(s) multitexte pour la lexical-unit/form de l'entrée parente
+     - relation/@type
+   - relation/ref : mettre une colonne multitext pour la lexical-unit/form de l'objet pointé
+   trait name "is-primary"
+   trait name "variant-type"
+   
+   dans le formulaire : mettre en grisé (non modifiable) les deux multitextes
+
+2/ Languages
+
+Super.
+
+  - tableau :
+    - ne pas afficher la colonne parent (les ids ne sont pas des informations)
+  - dans la colonne "Parent type" : cela affiche "form", "exemple", "pron" ou "variante": quand c'est "forme", il faudrait mettre le parent de form : gloss, definition, translation, field, note...
+    attention pour les glosses c'est directement
+  - Le champ "parent" dans le formulaire de droite : en faire un lien vers l'objet dans le tableau qui va bien ?
+  - pas de filter drop down pour la colonne "Languages" mais seulement un champ texte (il n'y a pratiquement que des valeurs uniques)
+  - dans le formulaire : applet multitext pour éditer le texte.
+
+3/ Category browser
+
+  a/ POS et Grammatical Info : c'est identique. Supprimer POS.
+  b/ Trait : il ne faut mettre la colonne "parent" (avec l'ID du parent) et il faut fusionner les lignes identiques.
+    (ici les lignes avec des valeurs identique (sans Parents) sont répétées et ont toutes la même fréquence d'affichée).
+  (très long à calculer actuellement : peut être une optimisation à faire ?)
+  Quand on clique sur une ligne, dans le formulaire de gauche qui s'affiche : retirer ID ("Parent"), retirer le bouton "Modify entry",
+  par contre mettre un bouton "accéder aux objets correspondant" qui affiche le tableau des entrées (ou senses, etc.) filtrés
+  à ceux qui ont un trait avec ce nom et cette valeur.
+  c/ Notes types : ce serait bien de rajouter une colonne "Parent Type" (comme dans Field) pour savoir sur quel objet sont les notes
+  d/ Field, Notes types, Translation type, Annotation : ce serait bien d'avoir un lien "aller au parent" dans le formulaire.
+
+  e/ rajouter aussi une entrée dans "Category browser" pour :
+    - les objets "Relation type" (relation/@type).
+    Leurs valeurs ne peuvent pas être modifiées, ce n'est donc pas dans configuration.
+    Elles ne sont pas listées quelque part (dans le header...).
+    (dans le fichier que je vous ai donné il y a bien des ranges appelés "note-type", "relation-type",  mais aucun mécanisme n'exprime que ce doit être les valeurs des notes/relations/etc.)
+
+  f/ Le menu du haut "Field configuration" : à mon avis il peut être retiré :
+ 
+  - la boîte de dialogue "Field configuration"->"Field type" est moins bien que celle qui est ouverte par le
+    bouton "New definition" dans "Dictionary configuration"->"Field definitions"
+  - pareil pour les traits
+  - Pour les autres entrées : (languages, Annotation type, Translation type, Note type, auquel on peut ajouter relation type)
+    Il serait mieux d'avoir des entrées "Manage languages", "Manage annotation type", "Manage translation type", etc. dans "Dictionary configuration".
+  - dans le cas de language : si je supprime une langue elle continue a être proposé dans les multitexte et
+    est à nouveau présente si j'ouvre à nouveau la boîte de dialogue des langues. Si possible il serait bien de séparer
+  object-language et meta-language dans cette boîte de dialogue (une langue n'est pas proposée dans les mêmes
+  multitexte selon qu'elle est de l'un ou l'autre type).
+
+4/ Dictionary configuration
+
+  - Dictionary description : pas besoin de l'espace à droite avec "Modify entry"?
+  - "Field definitions" -> renommer en "Field and traits definitions"
+  - Séparer ces deux premières entrées ("Dictionary description" et "Field definitions", plus celles venes du menu Field configuration : cf. f/ ci-dessus)
+    des suivantes, qui sont des ranges
+  - Pour les autres, créer une cinquième rubrique : "range" (ou Taxinomies ?) pour les lister (cf. 5. ci-dessous)
+
+4.1/ Définition des field et trait
+
+ - dans le formulaire : le champ texte "Option-range" devrait être un menu drop down permettant de sélectionner l'un des ranges existants, grisé à moins que "option.*" ne soit sélectionné dans "data type" et que ce soit un Trait (et non un field) qui soit créé.
+ 
+5/ Faire un cinquième groupe "Taxinomies" (pour lister les "Ranges")
+
+- Possibilité de créer une nouvelle Taxinomies
+- Grouper par fichiers sources de range puis en dessous par ordre alphabétique.
+- afficher la hiérarchie quand les range-element sont organisés hiérarchiquement ?
+
+6/ création rapide
+
+super. Les entrées ont un uuid mais les sens ont un id bizarre. bizarre le bouton pour ajouter la ligne qui est à côté du champ recherche.
+
+Retirer le champ recherche ici ?
+
+
+
+
