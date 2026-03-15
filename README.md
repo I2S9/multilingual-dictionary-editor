@@ -60,5 +60,5 @@ mvn javafx:run -pl dictionary-editor-fx
 - **`pom.xml`** : agrégateur (multi-modules)
 - **`lift-api/`** : lib LIFT + tests + fichiers LIFT/XML d'exemple en `src/test/resources/lift/`
 - **`dictionary-editor-fx/`**
-  - `src/main/resources/com/example/ui/` : `MainView.fxml`, `app.css`
-  - `src/main/java/com/example/` : point d'entrée `MainApp`
+  - `src/main/resources/fr/cnrs/lacito/liftgui/ui/` : `MainView.fxml`, `app.css`
+  - `src/main/java/fr/cnrs/lacito/liftgui/` : point d'entrée `MainApp`
