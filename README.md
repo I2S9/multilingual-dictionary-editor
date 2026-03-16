@@ -1,35 +1,6 @@
 # Éditeur de dictionnaires multilingues
 
-Application JavaFX permettant de **créer**, **modifier** et **gérer** des dictionnaires lexicographiques au format **LIFT**, avec support des langues objet et méta-langues.
-
-## Documentation technique
-
-La documentation complète est disponible en ligne :
-
-**https://multilingual-dictionary-editor.vercel.app/**
-
-Elle couvre notamment :
-- **Introduction** — Présentation du projet et objectifs
-- **Guide de démarrage** — Démarrer en 5 étapes
-- **Architecture** — Structure du projet, modules Maven
-- **Installation** — Prérequis, compilation et lancement
-- **Format LIFT** — Structure XML, entrées, sens, exemples et métadonnées
-- **Fonctionnalités** — Category browser, configuration, gestion des langues
-- **Glossaire** — Définitions des termes techniques
-
----
-
-## Stack technique
-
-- **Java** : JDK **21** (compilation en `release 21`)
-- **Build** : **Maven 3.x**
-- **UI** : **JavaFX 21** (`javafx-controls`, `javafx-fxml`)
-- **Format** : **LIFT** (XML)
-
-### Prérequis
-
-- **JDK 21** installé et disponible (`JAVA_HOME` recommandé)
-- **Maven** installé
+> Application bureau JavaFX permettant de **créer**, **modifier** et **gérer** des dictionnaires lexicographiques au format **LIFT**, avec support des langues objet et méta-langues.
 
 ## Installation et lancement
 
@@ -67,7 +38,32 @@ mvn -f dictionary-editor-fx/pom.xml javafx:run
 mvn test
 ```
 
----
+## Documentation technique
+
+La documentation complète est disponible en ligne :
+
+**https://multilingual-dictionary-editor.vercel.app/**
+
+Elle couvre notamment :
+- **Introduction** : Présentation du projet et objectifs
+- **Guide de démarrage** : Démarrer en 5 étapes
+- **Architecture** : Structure du projet, modules Maven
+- **Installation** : Prérequis, compilation et lancement
+- **Format LIFT** : Structure XML, entrées, sens, exemples et métadonnées
+- **Fonctionnalités** — Category browser, configuration, gestion des langues
+- **Glossaire** — Définitions des termes techniques
+
+## Stack technique
+
+- **Java** : JDK **21** (compilation en `release 21`)
+- **Build** : **Maven 3.x**
+- **UI** : **JavaFX 21** (`javafx-controls`, `javafx-fxml`)
+- **Format** : **LIFT** (XML)
+
+### Prérequis
+
+- **JDK 21** installé et disponible (`JAVA_HOME` recommandé)
+- **Maven** installé
 
 ## Structure du dépôt
 
