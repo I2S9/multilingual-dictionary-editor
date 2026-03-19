@@ -427,8 +427,6 @@ mvn install -pl lift-api
 mvn -f dictionary-editor-fx/pom.xml javafx:run
 \end{verbatim}
 
-Sous Windows, un script batch \texttt{run-app.bat} est fourni à la racine du projet. Ce script configure l'environnement et lance l'application ; il peut être exécuté par double-clic ou depuis l'invite de commandes.
-
 \subsection{Packaging et exécutable autonome}
 
 Pour générer un JAR exécutable avec toutes les dépendances (fat JAR), on peut utiliser le plugin \texttt{maven-assembly-plugin} ou \texttt{maven-shade-plugin}. La commande \texttt{mvn package} produit un JAR dans \texttt{dictionary-editor-fx/target/}. Pour une distribution autonome, il est possible de configurer \texttt{jlink} ou \texttt{jpackage} afin de créer une image native ou un installateur pour Windows, macOS ou Linux.

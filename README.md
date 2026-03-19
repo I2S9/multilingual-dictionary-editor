@@ -30,8 +30,6 @@ mvn install -pl lift-api
 mvn -f dictionary-editor-fx/pom.xml javafx:run
 ```
 
-**Sous Windows** : un script `run-app.bat` est fourni à la racine.
-
 **Tests** :
 
 ```bash
@@ -50,8 +48,8 @@ Elle couvre notamment :
 - **Architecture** : Structure du projet, modules Maven
 - **Installation** : Prérequis, compilation et lancement
 - **Format LIFT** : Structure XML, entrées, sens, exemples et métadonnées
-- **Fonctionnalités** — Category browser, configuration, gestion des langues
-- **Glossaire** — Définitions des termes techniques
+- **Fonctionnalités** : Category browser, configuration, gestion des langues
+- **Glossaire** : Définitions des termes techniques
 
 ## Stack technique
 
@@ -70,7 +68,6 @@ Elle couvre notamment :
 ```
 multilingual-dictionary-editor/
 ├── pom.xml                    # Agrégateur Maven (multi-modules)
-├── run-app.bat                # Script de lancement Windows
 ├── README.md
 │
 ├── lift-api/                  # Module bibliothèque LIFT
