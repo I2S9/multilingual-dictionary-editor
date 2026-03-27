@@ -2142,9 +2142,13 @@ public final class MainController {
 
     private void navigateToObject(Object obj) {
         if (obj instanceof LiftEntry e) { switchView(NAV_ENTRIES); selectEntryInTable(e); populateEntryEditor(e); }
-        else if (obj instanceof LiftSense s) { findParentEntry(s).ifPresent(entry -> { switchView(NAV_ENTRIES); selectEntryInTable(entry); populateEntryEditor(entry); }); }
-        else if (obj instanceof LiftExample ex) { findParentSense(ex).ifPresent(sense -> { findParentEntry(sense).ifPresent(entry -> { switchView(NAV_ENTRIES); selectEntryInTable(entry); populateEntryEditor(entry); }); }); }
-        else if (obj instanceof LiftNote n) { AbstractNotable p = n.getParent(); if (p instanceof LiftEntry e) { switchView(NAV_ENTRIES); selectEntryInTable(e); populateEntryEditor(e); } else if (p instanceof LiftSense s) { findParentEntry(s).ifPresent(entry -> { switchView(NAV_ENTRIES); selectEntryInTable(entry); populateEntryEditor(entry); }); } }
+        else if (obj instanceof LiftSense s) {
+            switchView(NAV_SENSES);
+            javafx.application.Platform.runLater(() -> {
+                senseTable.getSelectionModel().select(s);
+                populateSenseEditor(s);
+            });
+        }        else if (obj instanceof LiftNote n) { AbstractNotable p = n.getParent(); if (p instanceof LiftEntry e) { switchView(NAV_ENTRIES); selectEntryInTable(e); populateEntryEditor(e); } else if (p instanceof LiftSense s) { findParentEntry(s).ifPresent(entry -> { switchView(NAV_ENTRIES); selectEntryInTable(entry); populateEntryEditor(entry); }); } }
         else if (obj instanceof LiftVariant v) { if (v.getParent() != null) { switchView(NAV_ENTRIES); selectEntryInTable(v.getParent()); populateEntryEditor(v.getParent()); } }
         else if (obj instanceof LiftEtymology et) { LiftEntry entry = et.getParent(); if (entry != null) { switchView(NAV_ENTRIES); selectEntryInTable(entry); populateEntryEditor(entry); } }
         else if (obj instanceof LiftRelation r) {
@@ -2211,7 +2215,20 @@ public final class MainController {
     private void populateCategorySummaryEditor(String title, CategoryRow row) {
         populateCategorySummaryEditor(title, row, null);
     }
-
+    private void showObjectsWithGramInfo(String gramInfoValue) {
+        if (currentDictionary == null) return;
+        List<LiftSense> matches = currentDictionary.getLiftDictionaryComponents().getAllSenses().stream()
+                .filter(s -> s.getGrammaticalInfo().map(g -> gramInfoValue.equals(g.getValue())).orElse(false))
+                .collect(Collectors.toList());
+        // Navigate directly to Senses view filtered by this gram info
+        switchView(NAV_SENSES);
+        javafx.application.Platform.runLater(() -> {
+            if (!matches.isEmpty()) {
+                senseTable.getSelectionModel().select(matches.get(0));
+                populateSenseEditor(matches.get(0));
+            }
+        });
+    }
     private void populateCategorySummaryEditor(String title, CategoryRow row, String categoryKind) {
         setModifyButtonVisible(false);
         LinkedHashMap<String, String> values = new LinkedHashMap<>();
@@ -2232,15 +2249,6 @@ public final class MainController {
         }
     }
 
-    private void showObjectsWithGramInfo(String gramInfoValue) {
-        if (currentDictionary == null) return;
-        List<LiftEntry> matches = currentDictionary.getLiftDictionaryComponents().getAllSenses().stream()
-            .filter(s -> s.getGrammaticalInfo().map(g -> gramInfoValue.equals(g.getValue())).orElse(false))
-            .map(this::findParentEntry)
-            .flatMap(Optional::stream)
-            .collect(Collectors.toList());
-        showMatchingEntries(matches, I18n.get("nav.gramInfo") + ": " + gramInfoValue);
-    }
 
     private void showObjectsWithTranslationType(String transType) {
         if (currentDictionary == null) return;
@@ -2324,7 +2332,6 @@ public final class MainController {
             editorContainer.getChildren().add(backBtn);
         }
         VariantEditor ve = new VariantEditor();
-        ve.setOnVariantTypeChanged(() -> variantTable.refresh());
         ve.setVariantTypes(getHeaderRangeValues("variant-type"));
         ve.setRelationTypes(getKnownRelationTypes());
         ve.setVariantTypes(new ArrayList<>(getKnownTraitValues().getOrDefault("variant-type", Set.of())));
@@ -3000,6 +3007,7 @@ public final class MainController {
     private void showCategoryTable(String title, String colLabel, Map<String, Long> counts) {
         showCategoryTable(title, colLabel, counts, null);
     }
+
 
     private void showCategoryTable(String title, String colLabel, Map<String, Long> counts, String categoryKind) {
         TableView<CategoryRow> table = new TableView<>();
