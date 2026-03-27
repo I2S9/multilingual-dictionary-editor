@@ -12,11 +12,18 @@ package fr.cnrs.lacito.liftgui.ui.controls;
 
 import fr.cnrs.lacito.liftapi.model.LiftPronunciation;
 import fr.cnrs.lacito.liftapi.model.LiftRelation;
+import fr.cnrs.lacito.liftapi.model.LiftTrait;
 import fr.cnrs.lacito.liftapi.model.LiftVariant;
 import fr.cnrs.lacito.liftapi.model.MultiText;
 import fr.cnrs.lacito.liftgui.ui.I18n;
 import javafx.geometry.Insets;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.TitledPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -33,10 +40,11 @@ import java.util.Optional;
  * Displays: refId, forms MultiText, pronunciations, relations + ExtensibleWithFieldEditor.
  */
 public final class VariantEditor extends VBox {
+    private static final String VARIANT_TYPE_TRAIT = "variant-type";
+    private static final String EMPTY_CHOICE = "";
 
     private final TextField refIdField = new TextField();
     private final ComboBox<String> variantTypeCombo = new ComboBox<>();
-    private List<String> variantTypes = List.of();
     private final MultiTextEditor parentEntryFormsEditor = new MultiTextEditor();
     private final MultiTextEditor formsEditor = new MultiTextEditor();
     private final VBox pronunciationsBox = new VBox(6);
@@ -44,7 +52,10 @@ public final class VariantEditor extends VBox {
     private final ExtensibleWithFieldEditor extensibleEditor = new ExtensibleWithFieldEditor();
     /** Types from header range {@code lexical-relation} for {@link RelationEditor}. */
     private List<String> relationTypes = List.of();
-    private Runnable onVariantTypeChanged = null;
+    private List<String> variantTypes = List.of();
+    private LiftVariant currentVariant;
+    private ExtensibleAddActions currentAddActions;
+    private boolean updatingVariantType = false;
 
     public VariantEditor() {
         super(6);
@@ -55,10 +66,13 @@ public final class VariantEditor extends VBox {
         refIdField.setVisible(false);
         Label refIdLabel = new Label("Ref ID");
         refIdLabel.setVisible(false);
-
+        Label variantTypeLabel = new Label(I18n.get("editor.variantType"));
         variantTypeCombo.setEditable(false);
-        variantTypeCombo.setPromptText("type de variante");
         variantTypeCombo.setMaxWidth(Double.MAX_VALUE);
+        variantTypeCombo.setPromptText(I18n.get("editor.variantType"));
+        variantTypeCombo.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (!updatingVariantType) updateVariantType(newVal);
+        });
 
         TitledPane parentFormsPane = new TitledPane("Entrée parent (lexical-unit)", parentEntryFormsEditor);
         parentFormsPane.setExpanded(true);
@@ -69,10 +83,10 @@ public final class VariantEditor extends VBox {
         grid.setVgap(6);
         grid.add(refIdLabel, 0, 0);
         grid.add(refIdField, 1, 0);
-        grid.add(new Label("Type de variante"), 0, 1);
+        grid.add(variantTypeLabel, 0, 1);
         grid.add(variantTypeCombo, 1, 1);
-        GridPane.setHgrow(variantTypeCombo, Priority.ALWAYS);
         GridPane.setHgrow(refIdField, Priority.ALWAYS);
+        GridPane.setHgrow(variantTypeCombo, Priority.ALWAYS);
 
         parentEntryFormsEditor.setFixedLanguageRows(true);
         formsEditor.setFixedLanguageRows(true);
@@ -95,16 +109,15 @@ public final class VariantEditor extends VBox {
 
         getChildren().addAll(parentFormsPane, grid, formsPane, pronPane, relPane, extPane);
     }
-    public void setOnVariantTypeChanged(Runnable callback) {
-        this.onVariantTypeChanged = callback;
-    }
+
     public void setRelationTypes(List<String> relationTypes) {
         this.relationTypes = relationTypes == null ? List.of() : List.copyOf(relationTypes);
     }
-    public void setVariantTypes(List<String> types) {
-        this.variantTypes = types == null ? List.of() : List.copyOf(types);
-        variantTypeCombo.getItems().setAll(this.variantTypes);
+
+    public void setVariantTypes(List<String> variantTypes) {
+        this.variantTypes = variantTypes == null ? List.of() : List.copyOf(variantTypes);
     }
+
     /**
      * @param v          the variant
      * @param objLangs   object-languages for variant forms and pronunciations
@@ -118,9 +131,19 @@ public final class VariantEditor extends VBox {
     public void setVariant(LiftVariant v, Collection<String> objLangs, Collection<String> metaLangs, ExtensibleAddActions addActions) {
         pronunciationsBox.getChildren().clear();
         relationsBox.getChildren().clear();
+        currentVariant = v;
+        currentAddActions = addActions;
 
         if (v == null) {
             refIdField.setText("");
+            updatingVariantType = true;
+            try {
+                variantTypeCombo.getItems().clear();
+                variantTypeCombo.setValue(null);
+                variantTypeCombo.setDisable(true);
+            } finally {
+                updatingVariantType = false;
+            }
             parentEntryFormsEditor.setMultiText(null);
             formsEditor.setMultiText(null);
             formsEditor.setReadOnly(true);
@@ -128,27 +151,24 @@ public final class VariantEditor extends VBox {
             return;
         }
         refIdField.setText(v.getRefId().orElse(""));
-        // Load current variant type
-        String currentType = v.getTraits().stream()
-                .filter(t -> "variant-type".equals(t.getName()))
-                .findFirst()
-                .map(fr.cnrs.lacito.liftapi.model.LiftTrait::getValue)
-                .orElse(null);
-        if (currentType != null && !variantTypeCombo.getItems().contains(currentType)) {
-            variantTypeCombo.getItems().add(0, currentType);
+        String currentVariantType = v.getTraits().stream()
+            .filter(t -> VARIANT_TYPE_TRAIT.equals(t.getName()))
+            .map(LiftTrait::getValue)
+            .filter(value -> value != null && !value.isBlank())
+            .findFirst()
+            .orElse(null);
+        LinkedHashSet<String> comboItems = new LinkedHashSet<>();
+        comboItems.add(EMPTY_CHOICE);
+        comboItems.addAll(variantTypes);
+        if (currentVariantType != null) comboItems.add(currentVariantType);
+        updatingVariantType = true;
+        try {
+            variantTypeCombo.getItems().setAll(comboItems);
+            variantTypeCombo.setValue(currentVariantType == null ? EMPTY_CHOICE : currentVariantType);
+            variantTypeCombo.setDisable(addActions == null || comboItems.size() <= 1);
+        } finally {
+            updatingVariantType = false;
         }
-        variantTypeCombo.setValue(currentType);
-
-// Auto-save variant type
-        variantTypeCombo.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null && !newVal.equals(oldVal)) {
-                v.getTraits().stream()
-                        .filter(t -> "variant-type".equals(t.getName()))
-                        .findFirst()
-                        .ifPresent(t -> t.setValue(newVal));
-                if (onVariantTypeChanged != null) onVariantTypeChanged.run();
-            }
-        });
         LiftVariant variant = v;
         MultiText parentForms = variant.getParent() != null ? variant.getParent().getForms() : null;
         parentEntryFormsEditor.setAvailableLanguages(objLangs);
@@ -221,5 +241,24 @@ public final class VariantEditor extends VBox {
         }
 
         extensibleEditor.setModel(v, metaLangs, addActions);
+    }
+
+    private void updateVariantType(String newValue) {
+        if (currentVariant == null) return;
+        LiftTrait existingTrait = currentVariant.getTraits().stream()
+            .filter(t -> VARIANT_TYPE_TRAIT.equals(t.getName()))
+            .findFirst()
+            .orElse(null);
+        if (newValue == null || newValue.isBlank()) {
+            if (existingTrait != null) currentVariant.getTraits().remove(existingTrait);
+            return;
+        }
+        if (existingTrait != null) {
+            existingTrait.setValue(newValue);
+            return;
+        }
+        if (currentAddActions != null) {
+            currentAddActions.addTrait(VARIANT_TYPE_TRAIT, newValue);
+        }
     }
 }

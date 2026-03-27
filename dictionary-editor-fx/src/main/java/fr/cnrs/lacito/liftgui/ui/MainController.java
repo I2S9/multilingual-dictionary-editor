@@ -128,6 +128,7 @@ public final class MainController {
     private static final String NAV_TRANS_TYPES = "nav.transTypes";
     private static final String NAV_NOTE_TYPES    = "nav.noteTypes";
     private static final String NAV_RELATION_TYPES = "nav.relationTypes";
+    private static final String NAV_FIELD_TYPES    = "nav.fieldTypes";
     private static final String NAV_QUICK_ENTRY  = "nav.quickEntry";
 
     /* ─── Header configuration nav keys ─── */
@@ -188,6 +189,9 @@ public final class MainController {
     private final TableView<LiftField> fieldTable = new TableView<>();
     private final TableView<MultiTextField> langFieldTable = new TableView<>();
     private final TableView<QuickEntryRow> quickEntryTable = new TableView<>();
+    private List<LiftEntry> entrySubsetOverride = null;
+    private String entrySubsetTitle = null;
+    private boolean keepEntrySubsetOnNextEntryView = false;
 
     /* ─── Wrapper for language field view ─── */
     public record MultiTextField(String parentType, String parentId, String lang, String text, Object parentObject, MultiText multiText) {
@@ -337,7 +341,7 @@ public final class MainController {
             navItem(NAV_ENTRIES), navItem(NAV_SENSES),
             navItem(NAV_EXAMPLES), navItem(NAV_NOTES),
             navItem(NAV_VARIANTS), navItem(NAV_ETYMOLOGIES),
-            navItem(NAV_RELATIONS)
+            navItem(NAV_RELATIONS), navItem(NAV_FIELDS)
         );
 
         TreeItem<String> langs = new TreeItem<>(I18n.get("nav.languages"));
@@ -351,7 +355,7 @@ public final class MainController {
             navItem(NAV_TRAITS), navItem(NAV_ANNOTATIONS),
             navItem(NAV_TRANS_TYPES), navItem(NAV_NOTE_TYPES),
             navItem(NAV_RELATION_TYPES),
-            navItem(NAV_FIELDS)
+            navItem(NAV_FIELD_TYPES)
         );
 
         headerCfgNode = new TreeItem<>(I18n.get("nav.headerConfig"));
@@ -451,6 +455,13 @@ public final class MainController {
     /* ─── View switching ─── */
 
     private void switchView(String viewName) {
+        if (NAV_ENTRIES.equals(viewName)) {
+            if (!keepEntrySubsetOnNextEntryView) {
+                entrySubsetOverride = null;
+                entrySubsetTitle = null;
+            }
+            keepEntrySubsetOnNextEntryView = false;
+        }
         currentView = viewName;
         ensureRightPanelVisible();
         String title = viewName.startsWith(NAV_CFG_RANGE_PREFIX)
@@ -489,6 +500,7 @@ public final class MainController {
             case NAV_TRANS_TYPES -> showTranslationTypesView();
             case NAV_NOTE_TYPES    -> showNoteTypesView();
             case NAV_RELATION_TYPES -> showRelationTypesView();
+            case NAV_FIELD_TYPES   -> showFieldTypesView();
             case NAV_QUICK_ENTRY  -> showQuickEntryView();
             case NAV_CFG_DESC        -> { showHeaderDescView(); setRightPanelVisible(false); }
             case NAV_CFG_FIELD_DEFS  -> showHeaderFieldDefsView();
@@ -603,12 +615,14 @@ public final class MainController {
         VBox.setVgrow(entryTable, Priority.ALWAYS);
         tableContainer.getChildren().setAll(wrapper);
         applyCurrentFilter();
+        if (entrySubsetTitle != null) viewTitle.setText(entrySubsetTitle);
         if (!filteredEntries.isEmpty()) {
             entryTable.getSelectionModel().selectFirst();
             LiftEntry selected = entryTable.getSelectionModel().getSelectedItem();
             if (selected != null) populateEntryEditor(selected);
         }
-        updateCountLabel(filteredEntries.size(), baseEntries.size());
+        int total = entrySubsetOverride != null ? entrySubsetOverride.size() : baseEntries.size();
+        updateCountLabel(filteredEntries.size(), total);
     }
 
     private final List<ComboBox<String>> entryColumnFilters = new ArrayList<>();
@@ -1534,20 +1548,15 @@ public final class MainController {
             });
 
             Button addRelationBtn = new Button(I18n.get("btn.addRelation"));
+            boolean noRelationTypes = getKnownRelationTypes().isEmpty();
+            addRelationBtn.setDisable(noRelationTypes);
             addRelationBtn.setOnAction(e -> {
                 List<String> types = getKnownRelationTypes();
-                Optional<String> typeOpt;
-                if (types.isEmpty()) {
-                    TextInputDialog tid = new TextInputDialog();
-                    tid.setTitle(I18n.get("btn.addRelation"));
-                    tid.setHeaderText(I18n.get("col.type"));
-                    typeOpt = tid.showAndWait();
-                } else {
-                    ChoiceDialog<String> dlg = new ChoiceDialog<>(types.get(0), types);
-                    dlg.setTitle(I18n.get("btn.addRelation"));
-                    dlg.setHeaderText(I18n.get("col.type"));
-                    typeOpt = dlg.showAndWait();
-                }
+                if (types.isEmpty()) return;
+                ChoiceDialog<String> dlg = new ChoiceDialog<>(types.get(0), types);
+                dlg.setTitle(I18n.get("btn.addRelation"));
+                dlg.setHeaderText(I18n.get("col.type"));
+                Optional<String> typeOpt = dlg.showAndWait();
                 typeOpt.filter(t -> t != null && !t.isBlank()).ifPresent(type -> {
                     org.xml.sax.helpers.AttributesImpl attrs = new org.xml.sax.helpers.AttributesImpl();
                     attrs.addAttribute("", "type", "type", "CDATA", type.trim());
@@ -1555,13 +1564,17 @@ public final class MainController {
                     populateEntryEditor(entry);
                 });
             });
+            StackPane addRelationWrapper = new StackPane(addRelationBtn);
+            if (noRelationTypes) {
+                Tooltip.install(addRelationWrapper, new Tooltip(I18n.get("tooltip.noRelationTypes")));
+            }
 
             Button addEtymologyBtn = new Button(I18n.get("btn.addEtymology"));
             addEtymologyBtn.setOnAction(e -> {
                 showAddEtymologyDialog(entry, factory);
             });
 
-            addButtons.getChildren().addAll(addSenseBtn, addVariantBtn, addPronBtn, addRelationBtn, addEtymologyBtn);
+            addButtons.getChildren().addAll(addSenseBtn, addVariantBtn, addPronBtn, addRelationWrapper, addEtymologyBtn);
             editorContainer.getChildren().add(addButtons);
         }
         } catch (Exception ex) {
@@ -2083,7 +2096,7 @@ public final class MainController {
 
     private void showObjectsWithTrait(String traitName, String traitValue) {
         if (currentDictionary == null) return;
-        List<Object> matches = new ArrayList<>();
+        List<LiftEntry> matches = new ArrayList<>();
         var comps = currentDictionary.getLiftDictionaryComponents();
         for (LiftEntry e : comps.getAllEntries()) {
             if (e.getTraits().stream().anyMatch(t -> traitName.equals(t.getName()) && traitValue.equals(t.getValue())))
@@ -2091,52 +2104,40 @@ public final class MainController {
         }
         for (LiftSense s : comps.getAllSenses()) {
             if (s.getTraits().stream().anyMatch(t -> traitName.equals(t.getName()) && traitValue.equals(t.getValue())))
-                matches.add(s);
+                findParentEntry(s).ifPresent(matches::add);
         }
         for (LiftExample ex : comps.getAllExamples()) {
             if (ex.getTraits().stream().anyMatch(t -> traitName.equals(t.getName()) && traitValue.equals(t.getValue())))
-                matches.add(ex);
+                findParentSense(ex).flatMap(this::findParentEntry).ifPresent(matches::add);
         }
         for (LiftVariant v : comps.getAllVariants()) {
             if (v.getTraits() != null && v.getTraits().stream().anyMatch(t -> traitName.equals(t.getName()) && traitValue.equals(t.getValue())))
-                matches.add(v);
+                Optional.ofNullable(v.getParent()).ifPresent(matches::add);
         }
         for (LiftEtymology et : comps.getAllEntries().stream().flatMap(e -> e.getEtymologies().stream()).toList()) {
             if (et.getTraits().stream().anyMatch(t -> traitName.equals(t.getName()) && traitValue.equals(t.getValue())))
-                matches.add(et);
+                Optional.ofNullable(et.getParent()).ifPresent(matches::add);
         }
-        showFilteredObjectsTable(matches, I18n.get("nav.traits") + ": " + traitName + " = " + traitValue);
+        showMatchingEntries(matches, I18n.get("nav.traits") + ": " + traitName + " = " + traitValue);
     }
 
     private void showObjectsWithNoteType(String noteType) {
         if (currentDictionary == null) return;
-        List<Object> matches = new ArrayList<>();
+        List<LiftEntry> matches = new ArrayList<>();
         for (LiftNote n : currentDictionary.getLiftDictionaryComponents().getAllNotes()) {
-            if (noteType.equals(n.getType().orElse(""))) matches.add(n);
+            if (!noteType.equals(n.getType().orElse(""))) continue;
+            AbstractNotable parent = n.getParent();
+            if (parent instanceof LiftEntry e) matches.add(e);
+            else if (parent instanceof LiftSense s) findParentEntry(s).ifPresent(matches::add);
         }
-        showFilteredObjectsTable(matches, I18n.get("nav.noteTypes") + ": " + noteType);
+        showMatchingEntries(matches, I18n.get("nav.noteTypes") + ": " + noteType);
     }
 
-    private void showFilteredObjectsTable(List<Object> matches, String title) {
-        TableView<Object> table = new TableView<>(FXCollections.observableArrayList(matches));
-        table.getColumns().add(col("Type", o -> o.getClass().getSimpleName()));
-        table.getColumns().add(col(I18n.get("col.id"), o -> {
-            if (o instanceof LiftEntry e) return e.getId().orElse("");
-            if (o instanceof LiftSense s) return s.getId().orElse("");
-            if (o instanceof LiftExample ex) return ex.getExample().getForms().stream().findFirst().map(Form::toPlainText).orElse("(example)");
-            if (o instanceof LiftNote n) return n.getParent() != null ? describeParent(n.getParent()) : "";
-            if (o instanceof LiftVariant v) return v.getRefId().orElse("");
-            if (o instanceof LiftEtymology et) return et.getType() != null ? et.getType() : "";
-            if (o instanceof LiftRelation r) return (r.getType() != null ? r.getType() : "") + " @ " + describeParent(r.getParent());
-            if (o instanceof LiftPronunciation p) return p.getParent() != null ? describeParent(p.getParent()) : "";
-            return "";
-        }));
-        table.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> {
-            if (n != null) navigateToObject(n);
-        });
-        viewTitle.setText(title);
-        tableContainer.getChildren().setAll(wrapTableWithFilters(table));
-        updateCountLabel(matches.size(), matches.size());
+    private void showMatchingEntries(List<LiftEntry> matches, String title) {
+        entrySubsetOverride = matches.stream().distinct().toList();
+        entrySubsetTitle = title;
+        keepEntrySubsetOnNextEntryView = true;
+        switchView(NAV_ENTRIES);
     }
 
     private void navigateToObject(Object obj) {
@@ -2181,22 +2182,21 @@ public final class MainController {
         values.put(I18n.get("col.text"), field.getText().getForms().stream().findFirst().map(Form::toPlainText).orElse(""));
         populateSummaryEditor(I18n.get("nav.fields"), "", values);
         addGoToParentButton(field.getParent());
-        Button accessBtn = new Button(I18n.get("btn.accessObjects"));
-        accessBtn.getStyleClass().add("example-add-button");
-        accessBtn.setMaxWidth(Double.MAX_VALUE);
-        accessBtn.setOnAction(e -> showObjectsWithFieldType(field.getName()));
-        editorContainer.getChildren().add(accessBtn);
     }
 
     private void showObjectsWithFieldType(String fieldType) {
         if (currentDictionary == null) return;
-        List<Object> matches = currentDictionary.getLiftDictionaryComponents().getAllFields().stream()
+        List<LiftEntry> matches = currentDictionary.getLiftDictionaryComponents().getAllFields().stream()
             .filter(f -> fieldType.equals(f.getName()))
             .map(LiftField::getParent)
-            .filter(Objects::nonNull)
-            .distinct()
+            .map(parent -> {
+                if (parent instanceof LiftEntry e) return Optional.of(e);
+                if (parent instanceof LiftSense s) return findParentEntry(s);
+                return Optional.<LiftEntry>empty();
+            })
+            .flatMap(Optional::stream)
             .collect(Collectors.toList());
-        showFilteredObjectsTable(matches, I18n.get("nav.fields") + ": " + fieldType);
+        showMatchingEntries(matches, I18n.get("nav.fields") + ": " + fieldType);
     }
 
     private void addGoToParentButton(Object parent) {
@@ -2234,26 +2234,40 @@ public final class MainController {
 
     private void showObjectsWithGramInfo(String gramInfoValue) {
         if (currentDictionary == null) return;
-        List<Object> matches = currentDictionary.getLiftDictionaryComponents().getAllSenses().stream()
+        List<LiftEntry> matches = currentDictionary.getLiftDictionaryComponents().getAllSenses().stream()
             .filter(s -> s.getGrammaticalInfo().map(g -> gramInfoValue.equals(g.getValue())).orElse(false))
+            .map(this::findParentEntry)
+            .flatMap(Optional::stream)
             .collect(Collectors.toList());
-        showFilteredObjectsTable(matches, I18n.get("nav.gramInfo") + ": " + gramInfoValue);
+        showMatchingEntries(matches, I18n.get("nav.gramInfo") + ": " + gramInfoValue);
     }
 
     private void showObjectsWithTranslationType(String transType) {
         if (currentDictionary == null) return;
-        List<Object> matches = currentDictionary.getLiftDictionaryComponents().getAllExamples().stream()
+        List<LiftEntry> matches = currentDictionary.getLiftDictionaryComponents().getAllExamples().stream()
             .filter(ex -> ex.getTranslations().containsKey(transType))
+            .map(this::findParentSense)
+            .flatMap(Optional::stream)
+            .map(this::findParentEntry)
+            .flatMap(Optional::stream)
             .collect(Collectors.toList());
-        showFilteredObjectsTable(matches, I18n.get("nav.transTypes") + ": " + transType);
+        showMatchingEntries(matches, I18n.get("nav.transTypes") + ": " + transType);
     }
 
     private void showObjectsWithRelationType(String relationType) {
         if (currentDictionary == null) return;
-        List<Object> matches = currentDictionary.getLiftDictionaryComponents().getAllRelations().stream()
+        List<LiftEntry> matches = currentDictionary.getLiftDictionaryComponents().getAllRelations().stream()
             .filter(r -> relationType.equals(r.getType()))
+            .map(LiftRelation::getParent)
+            .map(parent -> {
+                if (parent instanceof LiftEntry e) return Optional.of(e);
+                if (parent instanceof LiftSense s) return findParentEntry(s);
+                if (parent instanceof LiftVariant v) return Optional.ofNullable(v.getParent());
+                return Optional.<LiftEntry>empty();
+            })
+            .flatMap(Optional::stream)
             .collect(Collectors.toList());
-        showFilteredObjectsTable(matches, I18n.get("nav.relationTypes") + ": " + relationType);
+        showMatchingEntries(matches, I18n.get("nav.relationTypes") + ": " + relationType);
     }
 
     private void populateSummaryEditor(String title, String code, LinkedHashMap<String, String> values) {
@@ -2313,6 +2327,7 @@ public final class MainController {
         ve.setOnVariantTypeChanged(() -> variantTable.refresh());
         ve.setVariantTypes(getHeaderRangeValues("variant-type"));
         ve.setRelationTypes(getKnownRelationTypes());
+        ve.setVariantTypes(new ArrayList<>(getKnownTraitValues().getOrDefault("variant-type", Set.of())));
         ve.setVariant(v, getObjectLanguages(), getMetaLanguages(), getFactory(currentDictionary) != null ? createVariantAddActions(v) : null);
         editorContainer.getChildren().add(ve);
     }
@@ -2390,9 +2405,11 @@ public final class MainController {
     private void applyCurrentFilter() {
         String q = Optional.ofNullable(searchField.getText()).orElse("").trim().toLowerCase(Locale.ROOT);
         if (currentView.equals(NAV_ENTRIES)) {
+            List<LiftEntry> entrySource = entrySubsetOverride != null ? entrySubsetOverride : baseEntries;
             List<TableColumn<LiftEntry, ?>> leaves = collectLeafColumns(entryTable);
             String clearOption = I18n.get("filter.clear");
             filteredEntries.setPredicate(entry -> {
+                if (!entrySource.contains(entry)) return false;
                 if (entry == null) return false;
                 if (!q.isEmpty() && !buildSearchText(entry).toLowerCase(Locale.ROOT).contains(q)) return false;
                 for (int i = 0; i < entryColumnFilters.size() && i < leaves.size(); i++) {
@@ -2404,12 +2421,12 @@ public final class MainController {
                 }
                 return true;
             });
-            refreshEntryFacetChoices(q, leaves, clearOption);
-            updateCountLabel(filteredEntries.size(), baseEntries.size());
+            refreshEntryFacetChoices(q, leaves, clearOption, entrySource);
+            updateCountLabel(filteredEntries.size(), entrySource.size());
         }
     }
 
-    private void refreshEntryFacetChoices(String q, List<TableColumn<LiftEntry, ?>> leaves, String clearOption) {
+    private void refreshEntryFacetChoices(String q, List<TableColumn<LiftEntry, ?>> leaves, String clearOption, List<LiftEntry> entrySource) {
         if (entryColumnFilters.isEmpty()) return;
         entryFilterInternalUpdate = true;
         try {
@@ -2418,7 +2435,7 @@ public final class MainController {
                 String currentValue = combo.getValue();
                 final int colIndex = i;
 
-                List<String> values = baseEntries.stream()
+                List<String> values = entrySource.stream()
                     .filter(e -> e != null && (q.isEmpty() || buildSearchText(e).toLowerCase(Locale.ROOT).contains(q)))
                     .filter(e -> rowMatchesEntryFiltersExcluding(e, leaves, clearOption, colIndex))
                     .map(e -> {
@@ -2935,6 +2952,48 @@ public final class MainController {
         showCategoryTable(I18n.get("nav.relationTypes"), I18n.get("col.type"), counts, "relation-type");
     }
 
+    /* ════════════════════ FIELD TYPES VIEW ════════════════════ */
+
+    private record FieldTypeRow(String fieldType, long frequency) {}
+
+    private void showFieldTypesView() {
+        if (currentDictionary == null) { tableContainer.getChildren().setAll(new Label(I18n.get("placeholder.noDictionary"))); return; }
+        Map<String, Long> counts = new LinkedHashMap<>();
+        for (LiftField f : currentDictionary.getLiftDictionaryComponents().getAllFields()) {
+            counts.merge(f.getName(), 1L, Long::sum);
+        }
+        TableView<FieldTypeRow> table = new TableView<>();
+        TableColumn<FieldTypeRow, String> typeCol = new TableColumn<>(I18n.get("col.type"));
+        typeCol.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue().fieldType()));
+        typeCol.setPrefWidth(250);
+        TableColumn<FieldTypeRow, String> freqCol = new TableColumn<>(I18n.get("col.frequency"));
+        freqCol.setCellValueFactory(cd -> new ReadOnlyStringWrapper(String.valueOf(cd.getValue().frequency())));
+        freqCol.setPrefWidth(100);
+        freqCol.getProperties().put("filterMode", FILTER_MODE_TEXT);
+        table.getColumns().addAll(typeCol, freqCol);
+        counts.entrySet().stream().sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+            .forEach(e -> table.getItems().add(new FieldTypeRow(e.getKey(), e.getValue())));
+        table.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> {
+            if (n != null) populateFieldTypeSummaryEditor(n);
+        });
+        VBox wrapper = wrapTableWithFilters(table);
+        tableContainer.getChildren().setAll(wrapper);
+        updateCountLabel(table.getItems().size(), table.getItems().size());
+    }
+
+    private void populateFieldTypeSummaryEditor(FieldTypeRow row) {
+        setModifyButtonVisible(false);
+        LinkedHashMap<String, String> values = new LinkedHashMap<>();
+        values.put(I18n.get("col.type"), row.fieldType());
+        values.put(I18n.get("col.frequency"), String.valueOf(row.frequency()));
+        populateSummaryEditor(I18n.get("nav.fieldTypes"), "", values);
+        Button accessBtn = new Button(I18n.get("btn.accessObjects"));
+        accessBtn.getStyleClass().add("example-add-button");
+        accessBtn.setMaxWidth(Double.MAX_VALUE);
+        accessBtn.setOnAction(e -> showObjectsWithFieldType(row.fieldType()));
+        editorContainer.getChildren().add(accessBtn);
+    }
+
     /** Shared helper: show a simple value + frequency table for category views. */
     private record CategoryRow(String value, long frequency) {}
 
@@ -2974,7 +3033,9 @@ public final class MainController {
             javafx.beans.property.StringProperty searchTextProperty) {
         ObservableList<T> sourceItems = FXCollections.observableArrayList(table.getItems());
         FilteredList<T> filtered = new FilteredList<>(sourceItems, t -> true);
-        table.setItems(filtered);
+        javafx.collections.transformation.SortedList<T> sorted = new javafx.collections.transformation.SortedList<>(filtered);
+        sorted.comparatorProperty().bind(table.comparatorProperty());
+        table.setItems(sorted);
 
         List<TableColumn<T, ?>> leaves = collectLeafColumns(table);
         List<javafx.scene.Node> filterInputs = new ArrayList<>();
