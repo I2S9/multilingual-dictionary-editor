@@ -2310,6 +2310,8 @@ public final class MainController {
             editorContainer.getChildren().add(backBtn);
         }
         VariantEditor ve = new VariantEditor();
+        ve.setOnVariantTypeChanged(() -> variantTable.refresh());
+        ve.setVariantTypes(getHeaderRangeValues("variant-type"));
         ve.setRelationTypes(getKnownRelationTypes());
         ve.setVariant(v, getObjectLanguages(), getMetaLanguages(), getFactory(currentDictionary) != null ? createVariantAddActions(v) : null);
         editorContainer.getChildren().add(ve);
