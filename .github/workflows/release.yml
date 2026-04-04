@@ -60,14 +60,6 @@ jobs:
             "-Djavafx.platform=${{ matrix.javafx }}" \
             -Djpackage.type=DEB -Djpackage.destSuffix=-deb
 
-      - name: Installeur RPM (Linux)
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          mvn -B -ntp -pl dictionary-editor-fx -Pdist jpackage:jpackage -DskipTests \
-            "-Djavafx.platform=${{ matrix.javafx }}" \
-            -Djpackage.type=RPM -Djpackage.destSuffix=-rpm
-
       - name: Image jlink + installeur MSI (Windows)
         if: runner.os == 'Windows'
         shell: bash
