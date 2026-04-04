@@ -57,36 +57,32 @@ jobs:
         shell: bash
         run: |
           mvn -B -ntp clean package -pl dictionary-editor-fx -am -Pdist -DskipTests \
-          "-Djavafx.platform=${{ matrix.javafx }}" \
-          -Djpackage.type=DEB -Djpackage.destSuffix=-deb \
-          -Djpackage.app-version=0.1.0
+            "-Djavafx.platform=${{ matrix.javafx }}" \
+            -Djpackage.type=DEB -Djpackage.destSuffix=-deb
 
       - name: Image jlink + installeur MSI (Windows)
         if: runner.os == 'Windows'
         shell: bash
         run: |
           mvn -B -ntp clean package -pl dictionary-editor-fx -am -Pdist -DskipTests \
-          "-Djavafx.platform=${{ matrix.javafx }}" \
-          -Djpackage.type=MSI -Djpackage.destSuffix=-msi \
-          -Djpackage.app-version=0.1.0
+            "-Djavafx.platform=${{ matrix.javafx }}" \
+            -Djpackage.type=MSI -Djpackage.destSuffix=-msi
 
       - name: Installeur EXE (Windows)
         if: runner.os == 'Windows'
         shell: bash
         run: |
           mvn -B -ntp -pl dictionary-editor-fx -Pdist jpackage:jpackage -DskipTests \
-          "-Djavafx.platform=${{ matrix.javafx }}" \
-          -Djpackage.type=EXE -Djpackage.destSuffix=-exe \
-          -Djpackage.app-version=0.1.0
+            "-Djavafx.platform=${{ matrix.javafx }}" \
+            -Djpackage.type=EXE -Djpackage.destSuffix=-exe
 
       - name: Image jlink + installeur DMG (macOS)
         if: runner.os == 'macOS'
         shell: bash
         run: |
           mvn -B -ntp clean package -pl dictionary-editor-fx -am -Pdist -DskipTests \
-          "-Djavafx.platform=${{ matrix.javafx }}" \
-          -Djpackage.type=DMG \
-          -Djpackage.app-version=0.1.0
+            "-Djavafx.platform=${{ matrix.javafx }}" \
+            -Djpackage.type=DMG
 
       - name: Publier les artefacts sur la release GitHub
         uses: softprops/action-gh-release@v2
