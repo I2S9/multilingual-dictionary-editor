@@ -52,15 +52,6 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y fakeroot rpm
 
-      - name: Aligner la version Maven sur le tag
-        shell: bash
-        run: |
-          VERSION="${GITHUB_REF#refs/tags/v}"
-          mvn -B -ntp org.codehaus.mojo:versions-maven-plugin:2.17.1:set \
-            -DnewVersion="$VERSION" -DgenerateBackupPoms=false
-          # lift-api n'a pas de <parent> : versions:set à la racine ne met pas à jour ce module
-          perl -0777 -i -pe 's/(<artifactId>lift-api<\/artifactId>\s*\n\s*<version>)[^<]+/$1'"$VERSION"'/' lift-api/pom.xml
-
       - name: Image jlink + installeur DEB (Linux)
         if: runner.os == 'Linux'
         shell: bash
